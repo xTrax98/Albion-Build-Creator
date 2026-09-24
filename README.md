@@ -1,5 +1,3 @@
-# Albion Build Creator 0.3.92
-
-TEST.
-
-Corrección de un error de sintaxis introducido en 0.3.91 que impedía cargar el JavaScript de la aplicación. Se mantiene la importación como añadido: no borra los datos existentes.
+Albion Build Creator 0.3.93 TEST
+- Menús de opciones con prioridad de interacción sobre el resto de la biblioteca.
+- Añadido Cambiar nombre para presets, composiciones y composiciones ZvZ.

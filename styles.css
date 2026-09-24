@@ -986,3 +986,21 @@ button,.ghost,.library-tab,.slot,.result{transition:border-color .15s,background
   height: 100%;
   object-fit: contain;
 }
+
+/* 0.3.93: action menus are a true top layer inside the library. */
+.library-section:has(.action-menu[open]){
+  z-index:2147483000 !important;
+}
+.library-section:has(.action-menu[open]) .action-menu,
+.library-section:has(.action-menu[open]) .action-menu-dropdown{
+  z-index:2147483647 !important;
+}
+.action-menu-dropdown{
+  pointer-events:auto;
+  isolation:isolate;
+}
+.action-menu-dropdown .ghost{
+  position:relative;
+  z-index:1;
+  pointer-events:auto;
+}

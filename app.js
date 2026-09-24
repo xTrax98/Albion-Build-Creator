@@ -19,7 +19,7 @@ const I18N = {
     noPresets:"Todavía no hay presets guardados.", noCompositions:"Todavía no hay composiciones.", compositionsHelp:"Organiza presets por rol.",
     newComposition:"Nueva composición", newZvZComposition:"Nueva composición ZvZ", compositionName:"Nombre de la composición", player:"Jugador", role:"Rol", preset:"Preset", addMember:"Añadir miembro", saveComposition:"Guardar composición", cancel:"Cancelar",
     compositionSaved:"Composición guardada: ", presetsCount:"presets", edit:"Editar", view:"Ver", backToCreator:"Volver al creador", saveNames:"Guardar nombres", zvzNamePlaceholder:"Nombre del jugador", zvzPreset:"Preset", zvzCompositionHelp:"Selecciona presets para tu composición ZvZ. Los nombres se ponen desde Ver.", compositionPreview:"Vista previa de la composición", players:"jugadores",
-    load:"Cargar", duplicate:"Duplicar", delete:"Eliminar", saved:"Preset guardado: ",
+    load:"Cargar", duplicate:"Duplicar", rename:"Cambiar nombre", delete:"Eliminar", saved:"Preset guardado: ",
     voiceBuild:"Crear build por voz", voiceListeningTitle:"Build por voz", voiceHelp:"Di los objetos de la build en cualquier orden.", voiceReady:"Pulsa el micrófono y habla.", startListening:"Escuchar", stopListening:"Parar", applyVoice:"Aplicar a la build", voiceUnsupported:"Tu navegador no admite reconocimiento de voz.", voiceListening:"Escuchando...", voiceNothing:"No he entendido ningún objeto.", voiceFound:"He encontrado:", voiceAmbiguous:"No he podido identificar con seguridad:", voiceApplied:"Build aplicada desde voz.", voiceStarting:"Activando micrófono...", voiceNoMatch:"No he detectado una frase clara. Prueba a hablar más cerca del micrófono.", voiceAudioStart:"Micrófono activo. Habla ahora.", voiceStartError:"No se pudo iniciar el reconocimiento.", clearVoice:"Limpiar", voiceSearching:"Buscando objetos...", voiceCleared:"Texto de voz limpiado.", voiceProcess:"Buscar objetos", voiceReadyToProcess:"Texto capturado. Pulsa Buscar objetos.",
     allCategories:"Todas las categorías", loading:"Cargando objetos...", tier:"Tier",
     enchantment:"Encantamiento", quality:"Calidad", add:"Añadir al build",
@@ -37,7 +37,7 @@ const I18N = {
     noPresets:"No saved presets yet.", noCompositions:"No compositions yet.", compositionsHelp:"Organize presets by role.",
     newComposition:"New composition", newZvZComposition:"New ZvZ composition", compositionName:"Composition name", player:"Player", role:"Role", preset:"Preset", addMember:"Add member", saveComposition:"Save composition", cancel:"Cancel",
     compositionSaved:"Composition saved: ", presetsCount:"presets", edit:"Edit", view:"View", backToCreator:"Back to creator", saveNames:"Save names", zvzNamePlaceholder:"Player name", zvzPreset:"Preset", zvzCompositionHelp:"Select presets for your ZvZ composition. Names are entered from View.", compositionPreview:"Composition preview", players:"players",
-    load:"Load", duplicate:"Duplicate", delete:"Delete", saved:"Preset saved: ",
+    load:"Load", duplicate:"Duplicate", rename:"Rename", delete:"Delete", saved:"Preset saved: ",
     voiceBuild:"Create build by voice", voiceListeningTitle:"Build by voice", voiceHelp:"Say the build items in any order.", voiceReady:"Press the microphone and speak.", startListening:"Listen", stopListening:"Stop", applyVoice:"Apply to build", voiceUnsupported:"Your browser does not support speech recognition.", voiceListening:"Listening...", voiceNothing:"I could not understand any item.", voiceFound:"Found:", voiceAmbiguous:"I could not identify with confidence:", voiceApplied:"Build applied from voice.", voiceStarting:"Activating microphone...", voiceNoMatch:"I did not detect a clear phrase. Try speaking closer to the microphone.", voiceAudioStart:"Microphone active. Speak now.", voiceStartError:"Could not start speech recognition.", clearVoice:"Clear", voiceSearching:"Searching items...", voiceCleared:"Voice text cleared.", voiceProcess:"Find objects", voiceReadyToProcess:"Text captured. Press Find objects.",
     allCategories:"All categories", loading:"Loading items...", tier:"Tier",
     enchantment:"Enchantment", quality:"Quality", add:"Add to build",
@@ -216,6 +216,7 @@ function renderCompositions(){
         <div class="action-menu-dropdown">
           <button class="ghost" type="button" data-view-composition="${escapeHtml(c.id)}">${escapeHtml(t("view"))}</button>
           <button class="ghost" type="button" data-duplicate-composition="${escapeHtml(c.id)}">${escapeHtml(t("duplicate"))}</button>
+          <button class="ghost" type="button" data-rename-composition="${escapeHtml(c.id)}">${escapeHtml(t("rename"))}</button>
           <button class="ghost" type="button" data-edit-composition="${escapeHtml(c.id)}">${escapeHtml(t("edit"))}</button>
           <button class="ghost danger" type="button" data-delete-composition="${escapeHtml(c.id)}">${escapeHtml(t("delete"))}</button>
         </div>
@@ -224,6 +225,7 @@ function renderCompositions(){
   box.querySelectorAll("[data-view-composition]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); showCompositionPreview(b.getAttribute("data-view-composition")); }));
   box.querySelectorAll("[data-duplicate-composition]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); duplicateComposition(b.getAttribute("data-duplicate-composition")); }));
   box.querySelectorAll("[data-edit-composition]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); openCompositionEditor(b.getAttribute("data-edit-composition")); }));
+  box.querySelectorAll("[data-rename-composition]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); renameComposition(b.dataset.renameComposition); }));
   box.querySelectorAll("[data-delete-composition]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); deleteComposition(b.getAttribute("data-delete-composition")); }));
 }
 
@@ -305,10 +307,11 @@ function renderZvZCompositions(){
   const box = $("#zvzList"); const list = getZvZCompositions(); const count = $("#zvzCount");
   if(count) count.textContent = list.length;
   if(!list.length){ box.innerHTML = `<div class="library-empty"><div class="library-empty-icon">＋</div><strong>${escapeHtml(t("noCompositions"))}</strong><p>${escapeHtml(t("zvzCompositionHelp"))}</p></div>`; return; }
-  box.innerHTML = list.map(c=>`<div class="composition-card"><div><strong>${escapeHtml(c.name)}</strong><small>${(c.members||[]).length} ${escapeHtml(t("players"))}</small></div><details class="action-menu"><summary class="ghost action-menu-trigger" aria-label="Más opciones">...</summary><div class="action-menu-dropdown"><button class="ghost" type="button" data-view-zvz="${escapeHtml(c.id)}">${escapeHtml(t("view"))}</button><button class="ghost" type="button" data-duplicate-zvz="${escapeHtml(c.id)}">${escapeHtml(t("duplicate"))}</button><button class="ghost" type="button" data-edit-zvz="${escapeHtml(c.id)}">${escapeHtml(t("edit"))}</button><button class="ghost danger" type="button" data-delete-zvz="${escapeHtml(c.id)}">${escapeHtml(t("delete"))}</button></div></details></div>`).join("");
+  box.innerHTML = list.map(c=>`<div class="composition-card"><div><strong>${escapeHtml(c.name)}</strong><small>${(c.members||[]).length} ${escapeHtml(t("players"))}</small></div><details class="action-menu"><summary class="ghost action-menu-trigger" aria-label="Más opciones">...</summary><div class="action-menu-dropdown"><button class="ghost" type="button" data-view-zvz="${escapeHtml(c.id)}">${escapeHtml(t("view"))}</button><button class="ghost" type="button" data-duplicate-zvz="${escapeHtml(c.id)}">${escapeHtml(t("duplicate"))}</button><button class="ghost" type="button" data-rename-zvz="${escapeHtml(c.id)}">${escapeHtml(t("rename"))}</button><button class="ghost" type="button" data-edit-zvz="${escapeHtml(c.id)}">${escapeHtml(t("edit"))}</button><button class="ghost danger" type="button" data-delete-zvz="${escapeHtml(c.id)}">${escapeHtml(t("delete"))}</button></div></details></div>`).join("");
   box.querySelectorAll("[data-view-zvz]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); showZvZPreview(b.getAttribute("data-view-zvz")); }));
   box.querySelectorAll("[data-duplicate-zvz]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); duplicateZvZ(b.getAttribute("data-duplicate-zvz")); }));
   box.querySelectorAll("[data-edit-zvz]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); openZvZEditor(b.getAttribute("data-edit-zvz")); }));
+  box.querySelectorAll("[data-rename-zvz]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); renameZvZ(b.dataset.renameZvZ); }));
   box.querySelectorAll("[data-delete-zvz]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); deleteZvZ(b.getAttribute("data-delete-zvz")); }));
 }
 
@@ -458,6 +461,19 @@ function loadPreset(id){
   $("#status").textContent = `${t("selected")}${preset.name}`;
 }
 
+function renamePreset(id){
+  const list=getPresets();
+  const preset=list.find(x=>x.id===id);
+  if(!preset) return;
+  const next=window.prompt(t("rename"), preset.name || "");
+  if(next===null) return;
+  const name=next.trim();
+  if(!name) return;
+  preset.name=name;
+  savePresets(list);
+  renderPresets();
+}
+
 function deletePreset(id){
   savePresets(getPresets().filter(x=>x.id!==id));
   renderPresets();
@@ -485,6 +501,19 @@ function duplicatePreset(id){
   setLibraryTab("presets");
 }
 
+function renameComposition(id){
+  const list=getCompositions();
+  const composition=list.find(x=>x.id===id);
+  if(!composition) return;
+  const next=window.prompt(t("rename"), composition.name || "");
+  if(next===null) return;
+  const name=next.trim();
+  if(!name) return;
+  composition.name=name;
+  saveCompositions(list);
+  renderCompositions();
+}
+
 function duplicateComposition(id){
   const list=getCompositions();
   const original=list.find(x=>x.id===id);
@@ -501,6 +530,19 @@ function duplicateComposition(id){
   saveCompositions(list.slice(0,50));
   renderCompositions();
   setLibraryTab("compositions");
+}
+
+function renameZvZ(id){
+  const list=getZvZCompositions();
+  const composition=list.find(x=>x.id===id);
+  if(!composition) return;
+  const next=window.prompt(t("rename"), composition.name || "");
+  if(next===null) return;
+  const name=next.trim();
+  if(!name) return;
+  composition.name=name;
+  saveZvZCompositions(list);
+  renderZvZCompositions();
 }
 
 function duplicateZvZ(id){
@@ -543,6 +585,7 @@ function renderPresets(){
         <div class="action-menu-dropdown">
           <button class="ghost" type="button" data-load-preset="${escapeHtml(p.id)}">${escapeHtml(t("load"))}</button>
           <button class="ghost" type="button" data-duplicate-preset="${escapeHtml(p.id)}">${escapeHtml(t("duplicate"))}</button>
+          <button class="ghost" type="button" data-rename-preset="${escapeHtml(p.id)}">${escapeHtml(t("rename"))}</button>
           <button class="ghost danger" type="button" data-delete-preset="${escapeHtml(p.id)}">${escapeHtml(t("delete"))}</button>
         </div>
       </details>
@@ -550,6 +593,7 @@ function renderPresets(){
   }).join("");
   box.querySelectorAll("[data-load-preset]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); loadPreset(b.dataset.loadPreset); }));
   box.querySelectorAll("[data-duplicate-preset]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); duplicatePreset(b.dataset.duplicatePreset); }));
+  box.querySelectorAll("[data-rename-preset]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); renamePreset(b.dataset.renamePreset); }));
   box.querySelectorAll("[data-delete-preset]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); deletePreset(b.dataset.deletePreset); }));
 }
 
