@@ -930,8 +930,18 @@ button,.ghost,.library-tab,.slot,.result{transition:border-color .15s,background
 
 /* 0.3.81 TEST: prevent composition preview item art from being clipped at the bottom.
    Give the icon a tiny inner margin and render the image as a block element. */
+/* 0.3.82 TEST: the equipment grid was clipping the bottom of the icons because
+   a later compact-preview rule restored overflow:hidden. Keep the grid visible
+   vertically and give the row enough room for the full icon. */
+.workspace.preview-mode .composition-build-card {
+  min-height: 70px;
+}
+.workspace.preview-mode .composition-build-card .composition-build-grid {
+  overflow: visible !important;
+  align-items: center;
+}
 .workspace.preview-mode .composition-build-card .composition-icon {
-  padding: 1px;
+  padding: 0;
 }
 .workspace.preview-mode .composition-build-card .composition-icon img {
   display: block;
