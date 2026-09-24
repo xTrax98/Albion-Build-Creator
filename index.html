@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Creador de builds por xTrux</title>
-  <link rel="stylesheet" href="styles.css?v=0.3.119">
+  <link rel="stylesheet" href="styles.css?v=0.3.132-test14">
 </head>
 <body>
   <section id="fakeLogin" class="fake-login" aria-label="Inicio de sesión">
@@ -56,6 +56,8 @@
     </div>
   </div>
 
+  <div id="itemDebugModal" class="premium-modal" hidden><div id="itemDebugBackdrop" class="premium-modal-backdrop"></div><div class="premium-modal-card item-debug-card" role="dialog" aria-modal="true" aria-labelledby="itemDebugTitle"><div class="premium-modal-badge">🛠 TEST</div><h2 id="itemDebugTitle" data-i18n="debugTitle">Diagnóstico de IDs de objetos</h2><p class="item-debug-help">Aquí se ve el ID del JSON y el ID que la aplicación consigue actualmente en ao-data.</p><div id="itemDebugBody" class="item-debug-body"></div><div class="premium-modal-actions"><button type="button" id="itemDebugClose" class="primary" data-i18n="debugClose">Cerrar</button></div></div></div>
+
   <main class="app" id="mainApp" hidden>
     <header class="topbar">
       <div class="brand-block">
@@ -68,6 +70,7 @@
       </div>
       <div class="topbar-actions">
         <button type="button" id="premiumButton" class="premium-top-button">💎 Premium</button>
+        <button type="button" id="debugIdsButton" class="ghost debug-ids-button" data-i18n="debugIds">🔍 Ver IDs</button>
         <div class="language">
         <button class="lang active" data-lang="es" type="button">🇪🇸 ES</button>
         <button class="lang" data-lang="en" type="button">🇬🇧 EN</button>
@@ -89,6 +92,7 @@
               <span class="library-tab-count" id="presetCount">0</span>
             </button>
             <div id="presetsList" class="library-content library-content-open"></div>
+            <button id="deleteAllPresets" class="ghost danger library-new" type="button" data-i18n="clearAllPresets">🗑️ Borrar todos los presets</button>
           </div>
           <div class="library-section">
             <button class="library-tab" data-library-tab="compositions" type="button" aria-expanded="false">
@@ -208,6 +212,6 @@
     </div>
   </main>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>
-  <script src="app.js?v=0.3.112"></script>
+  <script src="app.js?v=0.3.132-test14"></script>
 </body>
 </html>

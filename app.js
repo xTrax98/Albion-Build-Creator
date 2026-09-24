@@ -7,6 +7,9 @@ const state = {
   build: {}
 };
 
+// TEST 0.3.124: diagnostic information for imported item IDs.
+let importDebugLog = [];
+
 const I18N = {
   es: {
     title:"Creador de builds por xTrux", subtitle:"Creador de builds para Albion Online",
@@ -19,12 +22,12 @@ const I18N = {
     noPresets:"Todavía no hay presets guardados.", noCompositions:"Todavía no hay composiciones.", compositionsHelp:"Organiza presets por rol.",
     newComposition:"Nueva composición", newZvZComposition:"Nueva composición ZvZ", compositionName:"Nombre de la composición", player:"Jugador", role:"Rol", preset:"Preset", addMember:"Añadir miembro", saveComposition:"Guardar composición", cancel:"Cancelar",
     compositionSaved:"Composición guardada: ", presetsCount:"presets", edit:"Editar", view:"Ver", backToCreator:"Volver al creador", saveNames:"Guardar nombres", screenshotDiscord:"📸 Crear imagen para Discord", screenshotWorking:"Generando imagen...", screenshotDone:"Imagen creada.", screenshotError:"No se pudo crear la imagen.", zvzNamePlaceholder:"Nombre del jugador", zvzPreset:"Preset", zvzCompositionHelp:"Selecciona presets para tu composición ZvZ. Los nombres se ponen desde Ver.", compositionPreview:"Vista previa de la composición", players:"jugadores",
-    load:"Cargar", duplicate:"Duplicar", rename:"Cambiar nombre", delete:"Eliminar", saved:"Preset guardado: ",
+    load:"Cargar", duplicate:"Duplicar", rename:"Cambiar nombre", delete:"Eliminar", clearAllPresets:"🗑️ Borrar todos los presets", clearAllPresetsConfirm:"¿Seguro que quieres borrar TODOS los presets? Esta acción no se puede deshacer.", saved:"Preset guardado: ",
     voiceBuild:"Crear build por voz", voiceListeningTitle:"Build por voz", voiceHelp:"Di los objetos de la build en cualquier orden.", voiceReady:"Pulsa el micrófono y habla.", startListening:"Escuchar", stopListening:"Parar", applyVoice:"Aplicar a la build", voiceUnsupported:"Tu navegador no admite reconocimiento de voz.", voiceListening:"Escuchando...", voiceNothing:"No he entendido ningún objeto.", voiceFound:"He encontrado:", voiceAmbiguous:"No he podido identificar con seguridad:", voiceApplied:"Build aplicada desde voz.", voiceStarting:"Activando micrófono...", voiceNoMatch:"No he detectado una frase clara. Prueba a hablar más cerca del micrófono.", voiceAudioStart:"Micrófono activo. Habla ahora.", voiceStartError:"No se pudo iniciar el reconocimiento.", clearVoice:"Limpiar", voiceSearching:"Buscando objetos...", voiceCleared:"Texto de voz limpiado.", voiceProcess:"Buscar objetos", voiceReadyToProcess:"Texto capturado. Pulsa Buscar objetos.",
     allCategories:"Todas las categorías", loading:"Cargando objetos...", tier:"Tier",
     enchantment:"Encantamiento", quality:"Calidad", add:"Añadir al build",
     loadingData:"Cargando base de objetos de Albion...", dataReady:"Objetos cargados: ",
-    noResults:"No se han encontrado objetos.", selected:"Seleccionado: ", twoHanded:"Arma a dos manos", offhandNeedsWeapon:"Selecciona primero un arma de una mano.", offhandLocked:"La secundaria no está disponible con esta arma."
+    noResults:"No se han encontrado objetos.", selected:"Seleccionado: ", twoHanded:"Arma a dos manos", offhandNeedsWeapon:"Selecciona primero un arma de una mano.", offhandLocked:"La secundaria no está disponible con esta arma.", debugIds:"🔍 Ver IDs", debugTitle:"Diagnóstico de IDs de objetos", debugEmpty:"Todavía no hay datos de diagnóstico. Importa un respaldo y vuelve a abrirlo.", debugClose:"Cerrar", debugSource:"ID del respaldo", debugResolved:"ID que está usando la app", debugStatus:"Estado", debugFound:"ENCONTRADO", debugNotFound:"NO ENCONTRADO", debugName:"Nombre"
   },
   en: {
     title:"Build Creator by xTrux", subtitle:"Albion Online build creator",
@@ -37,12 +40,12 @@ const I18N = {
     noPresets:"No saved presets yet.", noCompositions:"No compositions yet.", compositionsHelp:"Organize presets by role.",
     newComposition:"New composition", newZvZComposition:"New ZvZ composition", compositionName:"Composition name", player:"Player", role:"Role", preset:"Preset", addMember:"Add member", saveComposition:"Save composition", cancel:"Cancel",
     compositionSaved:"Composition saved: ", presetsCount:"presets", edit:"Edit", view:"View", backToCreator:"Back to creator", saveNames:"Save names", screenshotDiscord:"📸 Create image for Discord", screenshotWorking:"Generating image...", screenshotDone:"Image created.", screenshotError:"Could not create the image.", zvzNamePlaceholder:"Player name", zvzPreset:"Preset", zvzCompositionHelp:"Select presets for your ZvZ composition. Names are entered from View.", compositionPreview:"Composition preview", players:"players",
-    load:"Load", duplicate:"Duplicate", rename:"Rename", delete:"Delete", saved:"Preset saved: ",
+    load:"Load", duplicate:"Duplicate", rename:"Rename", delete:"Delete", clearAllPresets:"🗑️ Delete all presets", clearAllPresetsConfirm:"Are you sure you want to delete ALL presets? This cannot be undone.", saved:"Preset saved: ",
     voiceBuild:"Create build by voice", voiceListeningTitle:"Build by voice", voiceHelp:"Say the build items in any order.", voiceReady:"Press the microphone and speak.", startListening:"Listen", stopListening:"Stop", applyVoice:"Apply to build", voiceUnsupported:"Your browser does not support speech recognition.", voiceListening:"Listening...", voiceNothing:"I could not understand any item.", voiceFound:"Found:", voiceAmbiguous:"I could not identify with confidence:", voiceApplied:"Build applied from voice.", voiceStarting:"Activating microphone...", voiceNoMatch:"I did not detect a clear phrase. Try speaking closer to the microphone.", voiceAudioStart:"Microphone active. Speak now.", voiceStartError:"Could not start speech recognition.", clearVoice:"Clear", voiceSearching:"Searching items...", voiceCleared:"Voice text cleared.", voiceProcess:"Find objects", voiceReadyToProcess:"Text captured. Press Find objects.",
     allCategories:"All categories", loading:"Loading items...", tier:"Tier",
     enchantment:"Enchantment", quality:"Quality", add:"Add to build",
     loadingData:"Loading Albion item database...", dataReady:"Items loaded: ",
-    noResults:"No items found.", selected:"Selected: ", twoHanded:"Two-handed weapon", offhandNeedsWeapon:"Select a one-handed weapon first.", offhandLocked:"Off-hand is not available with this weapon."
+    noResults:"No items found.", selected:"Selected: ", twoHanded:"Two-handed weapon", offhandNeedsWeapon:"Select a one-handed weapon first.", offhandLocked:"Off-hand is not available with this weapon.", debugIds:"🔍 View IDs", debugTitle:"Item ID diagnostics", debugEmpty:"No diagnostic data yet. Import a backup and open this again.", debugClose:"Close", debugSource:"Backup ID", debugResolved:"ID used by the app", debugStatus:"Status", debugFound:"FOUND", debugNotFound:"NOT FOUND", debugName:"Name"
   }
 };
 
@@ -109,6 +112,9 @@ function closePremiumTroll(){
 }
 
 if(premiumButton) premiumButton.addEventListener("click", openPremiumMeme);
+if($("#debugIdsButton")) $("#debugIdsButton").addEventListener("click", openItemDebug);
+if($("#itemDebugClose")) $("#itemDebugClose").addEventListener("click", closeItemDebug);
+if($("#itemDebugBackdrop")) $("#itemDebugBackdrop").addEventListener("click", closeItemDebug);
 if(premiumNo) premiumNo.addEventListener("click", ()=>{
   if(premiumModal) premiumModal.hidden = true;
 });
@@ -219,11 +225,173 @@ function isArrayOfObjects(value){
   return Array.isArray(value) && value.every(x=>x && typeof x === "object" && !Array.isArray(x));
 }
 
-function importAllData(file){
+function normalizeImportName(value){
+  return String(value || "")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+function importedItemMatchesName(item, wantedName){
+  const wanted = normalizeImportName(wantedName);
+  if(!wanted) return false;
+  const wantedTokens = String(wantedName || "")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase().match(/[a-z0-9]+/g) || [];
+  const names = item?.names || {};
+  const candidates = [item?.name, names["EN-US"], names["EN"], names["ES-ES"], names["ES"], item?.id];
+  return candidates.some(name => {
+    const candidate = String(name || "");
+    const normalized = normalizeImportName(candidate);
+    if(normalized === wanted) return true;
+    // Backups can contain an older short English name while the current dump
+    // contains the tier-qualified name, e.g. "Judicator Helmet" ->
+    // "Elder's Judicator Helmet". Match when every meaningful word from the
+    // backup name is present in the current name, regardless of punctuation
+    // or an added tier adjective.
+    const candidateTokens = candidate
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase().match(/[a-z0-9]+/g) || [];
+    return wantedTokens.length >= 2 && wantedTokens.every(token => candidateTokens.includes(token));
+  });
+}
+
+// Legacy Albion UniqueName aliases.
+// Albion has renamed/reorganized several artifact/equipment families while
+// keeping the in-game item itself. Old exported builds can therefore contain
+// a UniqueName that no longer exists in the live ao-data dump.
+// Keys are the old baseId values; values are the current baseId values.
+const LEGACY_ITEM_BASE_ALIASES = {
+  "2H_MACE_GAMMACE": "2H_MACE_MORGANA"
+};
+
+const LEGACY_ITEM_ID_ALIASES = {
+  "T8_2H_HOLYSTAFF_AVALON": "T8_MAIN_HOLYSTAFF_AVALON",
+  "T8_2H_HOLYSTAFF_REDEMPTION": "T8_2H_HOLYSTAFF_UNDEAD",
+  "T8_2H_ARCANESTAFF_MALEVOLENTLOCUS": "T8_2H_ENIGMATICORB_MORGANA",
+  "T8_OFF_MUISAK": "T8_OFF_DEMONSKULL_HELL",
+  "T8_2H_MACE_GAMMACE": "T8_2H_MACE_MORGANA",
+  "T8_2H_MACE_HEAVY": "T8_2H_MACE",
+  "T8_2H_CURSEDSTAFF_DAMNATION": "T8_2H_CURSEDSTAFF_MORGANA",
+  "T8_2H_SWORD_GALATINE": "T8_2H_DUALSCIMITAR_UNDEAD",
+  "T8_MAIN_DAGGER_DEMON": "T8_MAIN_DAGGER_HELL",
+  "T8_2H_AXE_HALBERD": "T8_2H_HALBERD",
+  "T8_2H_FIRESTAFF_INFERNO": "T8_2H_INFERNOSTAFF",
+  "T8_2H_SHAPESHIFTER_ROOTBOUND": "T8_2H_SHAPESHIFTER_SET2",
+  "T8_2H_HAMMER_FORGE": "T8_2H_DUALHAMMER_HELL",
+  "T8_2H_MACE_OATHKEEPERS": "T8_2H_DUALMACE_AVALON"
+};
+
+function legacyAliasId(wantedId, wantedTier){
+  const clean = String(wantedId || "").replace(/@\d+$/i, "").toUpperCase();
+  if(LEGACY_ITEM_ID_ALIASES[clean]) return LEGACY_ITEM_ID_ALIASES[clean];
+  const parsed = parseItemVariant(clean);
+  const base = String(parsed.baseId || "").toUpperCase();
+  const baseAlias = LEGACY_ITEM_BASE_ALIASES[base];
+  if(baseAlias){
+    return `T${Number(wantedTier || parsed.tier || 4)}_${baseAlias}`;
+  }
+  const key = `T${Number(wantedTier || parsed.tier || 4)}_${base}`;
+  return LEGACY_ITEM_ID_ALIASES[key] || "";
+}
+
+
+function resolveImportedBuild(build){
+  const source = (build && typeof build === "object") ? build : {};
+  const out = {};
+  Object.entries(source).forEach(([slot, raw])=>{
+    if(!raw || typeof raw !== "object") return;
+    const wantedId = String(raw.id || "");
+    const parsedWanted = parseItemVariant(wantedId);
+    const wantedBase = String(raw.baseId || parsedWanted.baseId || "").toUpperCase();
+    const wantedTier = Number(raw.tier || parsedWanted.tier || 4);
+    const wantedName = String(raw.name || "");
+    const wantedEnchant = Number(raw.enchant || 0);
+    const wantedQuality = Number(raw.quality || 1);
+
+    let found = null;
+    let resolveMethod = "";
+    let aliasTarget = "";
+
+    found = state.items.find(x=>String(x.id).toUpperCase() === wantedId.toUpperCase());
+    if(found) resolveMethod = "EXACT ID";
+
+    if(!found && wantedBase){
+      found = state.items.find(x=>{
+        const parsed = parseItemVariant(x.id);
+        return parsed.tier === wantedTier && String(parsed.baseId || "").toUpperCase() === wantedBase;
+      });
+      if(found) resolveMethod = "BASE ID";
+    }
+
+    if(!found){
+      aliasTarget = legacyAliasId(wantedId, wantedTier);
+      if(aliasTarget){
+        found = state.items.find(x=>String(x.id).replace(/@\d+$/i, "").toUpperCase() === aliasTarget.toUpperCase());
+        if(!found){
+          // Some dumps can omit an equipment row from the normalized list.
+          // Keep the canonical ID so the build can still render its Albion icon.
+          const sameBase = String(aliasTarget).toUpperCase();
+          found = state.items.find(x=>String(x.id).replace(/@\d+$/i, "").toUpperCase().endsWith("_" + sameBase.split("_").slice(1).join("_"))) || null;
+        }
+        if(found) resolveMethod = `LEGACY ID ALIAS: ${wantedId} → ${aliasTarget}`;
+        else {
+          // Even if the current dump does not expose this row, keep the canonical
+          // current ID so the imported build can render its icon.
+          found = { id: aliasTarget, name: wantedName, names:{} };
+          resolveMethod = `LEGACY ID ALIAS (DIRECT): ${wantedId} → ${aliasTarget}`;
+        }
+      }
+    }
+
+    if(!found && wantedName){
+      found = state.items.find(x=>parseItemVariant(x.id).tier === wantedTier && importedItemMatchesName(x, wantedName));
+      if(found) resolveMethod = "NAME MATCH";
+    }
+
+    importDebugLog.push({
+      slot, wantedName, sourceId:wantedId, sourceBaseId:wantedBase, tier:wantedTier,
+      resolvedId:found?String(found.id):"", resolvedName:found?String(found.name||""):"",
+      method:resolveMethod, aliasTarget, status:found?"FOUND":"NOT FOUND"
+    });
+
+    if(found){
+      const id = found.id;
+      out[slot] = {
+        baseId: parseItemVariant(id).baseId,
+        id,
+        name: found.names && Object.keys(found.names).length ? getName(found) : (wantedName || String(found.name || id)),
+        tier: wantedTier,
+        enchant: wantedEnchant,
+        quality: wantedQuality,
+        icon: iconUrl(id, wantedEnchant, wantedQuality),
+        ...(raw._twoHandedWeapon ? {_twoHandedWeapon:true} : {})
+      };
+    }else{
+      out[slot] = {...raw};
+    }
+  });
+  return out;
+}
+
+
+let itemsLoadPromise = null;
+
+async function waitForItemsReady(){
+  if(state.items && state.items.length) return;
+  if(itemsLoadPromise) await itemsLoadPromise;
+  if(!state.items || !state.items.length){
+    await new Promise(resolve=>setTimeout(resolve,150));
+  }
+}
+
+async function importAllData(file){
   if(!file) return;
+  importDebugLog = [];
+  await waitForItemsReady();
   const reader=new FileReader();
-  reader.onload=()=>{
+  reader.onload=async()=>{
     try{
+      await waitForItemsReady();
       const data=JSON.parse(reader.result);
       const valid=data && data.app === "Albion Build Creator" && data.formatVersion === 1
         && isArrayOfObjects(data.presets)
@@ -246,7 +414,8 @@ function importAllData(file){
         return {
           ...JSON.parse(JSON.stringify(original)),
           id:newId,
-          createdAt:original.createdAt || new Date().toISOString()
+          createdAt:original.createdAt || new Date().toISOString(),
+          build: resolveImportedBuild(original.build)
         };
       });
 
@@ -705,6 +874,14 @@ function saveCurrentPreset(){
   $("#status").textContent = `${t("saved")}${name}`;
 }
 
+function renderItemDebug(){
+  const body=$("#itemDebugBody"); if(!body) return;
+  if(!importDebugLog.length){ body.innerHTML=`<p class="muted">${escapeHtml(t("debugEmpty"))}</p>`; return; }
+  body.innerHTML=importDebugLog.map((row,index)=>`<div class="item-debug-row ${row.status==="FOUND"?"found":"not-found"}"><div class="item-debug-main"><strong>#${index+1} · ${escapeHtml(row.wantedName||"(sin nombre)")}</strong><span>${escapeHtml(row.slot)}</span></div><div><b>${escapeHtml(t("debugSource"))}:</b> <code>${escapeHtml(row.sourceId||"—")}</code></div><div><b>Base ID respaldo:</b> <code>${escapeHtml(row.sourceBaseId||"—")}</code></div><div><b>${escapeHtml(t("debugResolved"))}:</b> <code>${escapeHtml(row.resolvedId||"—")}</code></div><div><b>ID candidato:</b> <code>${escapeHtml(row.aliasTarget||"—")}</code></div><div><b>Método:</b> <code>${escapeHtml(row.method||"—")}</code></div><div><b>${escapeHtml(t("debugName"))}:</b> ${escapeHtml(row.resolvedName||"—")}</div><div><b>${escapeHtml(t("debugStatus"))}:</b> <span class="item-debug-status">${escapeHtml(row.status==="FOUND"?t("debugFound"):t("debugNotFound"))}</span></div></div>`).join("");
+}
+function openItemDebug(){renderItemDebug();const modal=$("#itemDebugModal");if(modal)modal.hidden=false;}
+function closeItemDebug(){const modal=$("#itemDebugModal");if(modal)modal.hidden=true;}
+
 function loadPreset(id){
   const preset = getPresets().find(x=>x.id===id);
   if(!preset) return;
@@ -731,6 +908,15 @@ function renamePreset(id){
 function deletePreset(id){
   savePresets(getPresets().filter(x=>x.id!==id));
   renderPresets();
+}
+
+function deleteAllPresets(){
+  const presets=getPresets();
+  if(!presets.length) return;
+  if(!window.confirm(t("clearAllPresetsConfirm"))) return;
+  savePresets([]);
+  renderPresets();
+  setLibraryTab("presets");
 }
 
 function makeCopyId(prefix="copy"){
@@ -1017,6 +1203,7 @@ function setLibraryCollapsed(collapsed){
   libraryToggle.title = t(labelKey);
 }
 libraryToggle?.addEventListener("click",()=>setLibraryCollapsed(!workspaceEl?.classList.contains("library-collapsed")));
+document.querySelector("#deleteAllPresets")?.addEventListener("click", deleteAllPresets);
 
 document.querySelectorAll("[data-library-tab]").forEach(b=>b.addEventListener("click",()=>setLibraryTab(b.dataset.libraryTab)));
 $("#newComposition")?.addEventListener("click",()=>openCompositionEditor());
@@ -2168,6 +2355,61 @@ function buildVoiceIndex(){
   voiceAlbionWords=[...words];
 }
 
+function migrateStoredPresetIds(){
+  const presets = getPresets();
+  if(!Array.isArray(presets) || !presets.length) return;
+  let changed = false;
+  const migrated = presets.map(preset=>{
+    if(!preset || !preset.build || typeof preset.build !== "object") return preset;
+    const build = JSON.parse(JSON.stringify(preset.build));
+    let presetChanged = false;
+
+    // IMPORTANT: migrate known legacy IDs directly, without depending on
+    // state.items or the remote ao-data request. This makes old localStorage
+    // presets repairable even when the live dump is missing/reformatted.
+    Object.entries(build).forEach(([slot, raw])=>{
+      if(!raw || typeof raw !== "object") return;
+      const wantedId = String(raw.id || "");
+      const wantedTier = Number(raw.tier || parseItemVariant(wantedId).tier || 4);
+      const aliasTarget = legacyAliasId(wantedId, wantedTier);
+      if(aliasTarget){
+        const cleanTarget = String(aliasTarget).replace(/@\d+$/i, "").toUpperCase();
+        const current = String(raw.id || "").replace(/@\d+$/i, "").toUpperCase();
+        if(cleanTarget !== current){
+          const parsed = parseItemVariant(aliasTarget);
+          raw.id = aliasTarget;
+          raw.baseId = parsed.baseId;
+          raw.tier = parsed.tier;
+          raw.enchant = Number(raw.enchant || 0);
+          raw.quality = Number(raw.quality || 1);
+          raw.icon = iconUrl(aliasTarget, raw.enchant, raw.quality);
+          presetChanged = true;
+          importDebugLog.push({
+            slot, wantedName:String(raw.name||""), sourceId:wantedId, sourceBaseId:String(build[slot]?.baseId||""),
+            tier:wantedTier, resolvedId:aliasTarget, resolvedName:String(raw.name||""),
+            method:`LEGACY ID ALIAS (LOCAL): ${wantedId} → ${aliasTarget}`, aliasTarget, status:"FOUND"
+          });
+        }
+      }
+    });
+
+    // Resolve anything not handled by the direct legacy map.
+    const resolved = resolveImportedBuild(build);
+    const beforeResolved = JSON.stringify(build);
+    const afterResolved = JSON.stringify(resolved);
+    if(beforeResolved !== afterResolved) {
+      presetChanged = true;
+    }
+
+    if(presetChanged){
+      changed = true;
+      return {...preset, build:resolved};
+    }
+    return preset;
+  });
+  if(changed) savePresets(migrated);
+}
+
 async function loadItems(){
   $("#status").textContent = t("loadingData");
   try{
@@ -2265,8 +2507,16 @@ $("#applyVoice")?.addEventListener("click",applyVoiceBuild);
 
 syncWeaponSlots();
 applyI18n();
+// Repair legacy IDs already stored locally before loading remote item data.
+migrateStoredPresetIds();
 renderPresets();
 renderZvZCompositions();
 $("#selector")?.classList.add("hidden");
 $("#itemEditor")?.classList.add("hidden");
-loadItems();
+itemsLoadPromise = loadItems().then(()=>{
+  // Automatically repair legacy item IDs already stored in localStorage.
+  // This means the user does not need to re-import the JSON every time a
+  // legacy UniqueName is encountered.
+  migrateStoredPresetIds();
+  renderPresets();
+});
