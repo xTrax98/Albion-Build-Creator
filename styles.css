@@ -133,6 +133,19 @@ h1{font-size:28px;letter-spacing:-.02em}
   margin:0;
   transition:max-height .28s ease,opacity .2s ease,transform .28s ease,margin .28s ease,padding .28s ease;
 }
+/* 0.3.89: action menus must always render above the library sections. */
+.presets-list,
+.library-content-open .presets-list{
+  overflow:visible;
+}
+.library-section{
+  position:relative;
+  z-index:1;
+}
+.library-section:has(.action-menu[open]){
+  z-index:10000;
+}
+
 .library-content.library-content-open{
   max-height:2400px;
   opacity:1;
@@ -734,6 +747,7 @@ button,.ghost,.library-tab,.slot,.result{transition:border-color .15s,background
 .action-menu{
   position:relative;
   flex:none;
+  z-index:10000;
 }
 .action-menu > summary{
   list-style:none;
@@ -759,7 +773,7 @@ button,.ghost,.library-tab,.slot,.result{transition:border-color .15s,background
   position:absolute;
   right:0;
   top:calc(100% + 6px);
-  z-index:1000;
+  z-index:2147483647;
   min-width:150px;
   padding:6px;
   display:grid;
