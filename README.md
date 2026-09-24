@@ -1,7 +1,5 @@
-Albion Build Creator — TEST 0.3.91
+# Albion Build Creator 0.3.92
 
-Cambios:
-- Importar todo ahora añade los presets y composiciones importados a los existentes.
-- No borra ni reemplaza los datos actuales.
-- Se generan nuevos IDs para evitar conflictos entre datos importados y existentes.
-- La build que esté abierta actualmente no se reemplaza durante la importación.
+TEST.
+
+Corrección de un error de sintaxis introducido en 0.3.91 que impedía cargar el JavaScript de la aplicación. Se mantiene la importación como añadido: no borra los datos existentes.

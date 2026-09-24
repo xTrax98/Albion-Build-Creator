@@ -127,7 +127,7 @@ function importAllData(file){
         && isArrayOfObjects(data.zvzCompositions);
       if(!valid){ alert(t("importInvalid")); return; }
       // Importar significa AÑADIR.
- Nunca reemplazamos lo que ya existe.
+      // Nunca reemplazamos lo que ya existe.
       // Generamos nuevos IDs para que los datos importados no entren en conflicto
       // con presets/composiciones que ya estén guardados en este navegador.
       const existingPresets=getPresets();
