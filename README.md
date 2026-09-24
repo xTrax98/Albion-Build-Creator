@@ -1,3 +1,3 @@
-Albion Build Creator 0.3.93 TEST
-- Menús de opciones con prioridad de interacción sobre el resto de la biblioteca.
-- Añadido Cambiar nombre para presets, composiciones y composiciones ZvZ.
+Albion Build Creator 0.3.94 TEST
+
+Fix: an open three-dot menu now places its entire card above following cards, preventing clicks through the menu.

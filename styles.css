@@ -987,6 +987,19 @@ button,.ghost,.library-tab,.slot,.result{transition:border-color .15s,background
   object-fit: contain;
 }
 
+/* 0.3.94: the entire card owning an open action menu must sit above every following card. */
+.preset-card:has(.action-menu[open]),
+.composition-card:has(.action-menu[open]){
+  position:relative;
+  z-index:2147483646 !important;
+}
+.preset-card:has(.action-menu[open]) .action-menu,
+.composition-card:has(.action-menu[open]) .action-menu,
+.preset-card:has(.action-menu[open]) .action-menu-dropdown,
+.composition-card:has(.action-menu[open]) .action-menu-dropdown{
+  z-index:2147483647 !important;
+}
+
 /* 0.3.93: action menus are a true top layer inside the library. */
 .library-section:has(.action-menu[open]){
   z-index:2147483000 !important;
