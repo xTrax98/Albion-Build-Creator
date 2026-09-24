@@ -1120,3 +1120,235 @@ button,.ghost,.library-tab,.slot,.result{transition:border-color .15s,background
   z-index:2147483647 !important;
   pointer-events:auto !important;
 }
+
+/* 0.3.105 TEST: when a composition has more than 10 players,
+   split the player cards into two columns. Up to 10 stays as one column. */
+.workspace.preview-mode .composition-builds.many-players,
+.workspace.preview-mode .zvz-build-list.many-players{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+  align-items:start;
+}
+.workspace.preview-mode .composition-builds.many-players .composition-build-card,
+.workspace.preview-mode .zvz-build-list.many-players .zvz-build-row{
+  width:100%;
+  max-width:none;
+  min-width:0;
+  box-sizing:border-box;
+}
+@media(max-width:1100px){
+  .workspace.preview-mode .composition-builds.many-players,
+  .workspace.preview-mode .zvz-build-list.many-players{
+    grid-template-columns:1fr;
+  }
+}
+@media(max-width:680px){
+  .workspace.preview-mode .composition-builds.many-players,
+  .workspace.preview-mode .zvz-build-list.many-players{
+    grid-template-columns:1fr;
+  }
+}
+
+
+/* 0.3.106 TEST: biblioteca lateral plegable con animación. */
+.workspace{position:relative;transition:grid-template-columns .32s ease,gap .32s ease;}
+.library-toggle{
+  position:absolute;
+  left:10px;
+  top:10px;
+  z-index:50;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  background:rgba(24,27,33,.96);
+  color:var(--text);
+  border:1px solid var(--border);
+  border-radius:9px;
+  padding:8px 10px;
+  font-size:12px;
+  font-weight:700;
+  box-shadow:0 8px 24px rgba(0,0,0,.22);
+  transition:left .32s ease,transform .32s ease,opacity .2s ease,border-color .15s ease;
+}
+.library-toggle:hover{border-color:var(--accent);}
+.workspace:not(.library-collapsed) .library-toggle{
+  left:10px;
+  transform:translateY(-52px);
+  opacity:.82;
+}
+.workspace:not(.library-collapsed) .library-toggle:hover{opacity:1;}
+
+/* The first grid column collapses to zero; the content columns expand naturally. */
+@media(min-width:851px){
+  .workspace.library-collapsed{
+    grid-template-columns:0 minmax(600px,1fr) minmax(520px,560px);
+    gap:18px;
+  }
+  .workspace.library-collapsed > .presets-panel{
+    width:0;
+    min-width:0;
+    max-width:0;
+    padding-left:0;
+    padding-right:0;
+    border-width:0;
+    opacity:0;
+    transform:translateX(-28px);
+    overflow:hidden;
+    pointer-events:none;
+  }
+  .workspace.library-collapsed .library-toggle{
+    left:8px;
+    top:10px;
+    transform:none;
+    opacity:1;
+    border-color:var(--accent);
+  }
+  .workspace.preview-mode.library-collapsed{
+    grid-template-columns:0 minmax(600px,1fr) !important;
+    gap:18px;
+  }
+  .workspace.preview-mode.library-collapsed > .presets-panel{
+    width:0 !important;
+    min-width:0 !important;
+    max-width:0 !important;
+    padding-left:0 !important;
+    padding-right:0 !important;
+    border-width:0 !important;
+  }
+}
+
+@media(max-width:850px){
+  .workspace.library-collapsed{
+    display:flex;
+    flex-direction:column;
+  }
+  .workspace.library-collapsed > .presets-panel{
+    max-height:0;
+    min-height:0;
+    padding-top:0;
+    padding-bottom:0;
+    margin:0;
+    border-width:0;
+    opacity:0;
+    transform:translateY(-16px);
+    overflow:hidden;
+    pointer-events:none;
+  }
+  .workspace .library-toggle{
+    position:fixed;
+    left:10px;
+    bottom:14px;
+    top:auto;
+  }
+  .workspace:not(.library-collapsed) .library-toggle{
+    transform:none;
+    opacity:.9;
+  }
+}
+
+@media(max-width:680px){
+  .workspace.library-collapsed > .presets-panel{width:100%;}
+}
+
+/* 0.3.107 TEST: Biblioteca como panel lateral con flecha y preview realmente fluido. */
+.workspace{position:relative;transition:grid-template-columns .32s ease,gap .32s ease;}
+.library-toggle{
+  position:absolute;
+  left:0;
+  top:14px;
+  z-index:100;
+  width:30px;
+  min-width:30px;
+  height:44px;
+  padding:0;
+  display:grid;
+  place-items:center;
+  background:#171a20;
+  color:var(--text);
+  border:1px solid var(--border);
+  border-left:0;
+  border-radius:0 9px 9px 0;
+  box-shadow:8px 6px 18px rgba(0,0,0,.28);
+  transition:left .32s ease,background .15s ease,border-color .15s ease;
+}
+.library-toggle:hover{border-color:var(--accent);background:#20242b;}
+.library-arrow{font-size:25px;line-height:1;font-weight:500;color:var(--accent);transform:translateY(-1px);}
+.workspace.library-collapsed .library-toggle{left:0;}
+
+/* En preview, la composición ocupa TODO el espacio restante. */
+@media(min-width:851px){
+  .workspace.preview-mode{
+    grid-template-columns:minmax(320px,390px) minmax(0,1fr) !important;
+    gap:18px;
+    width:100%;
+  }
+  .workspace.preview-mode > .presets-panel{
+    width:auto !important;
+    min-width:0 !important;
+    max-width:none !important;
+    box-sizing:border-box;
+    transition:width .32s ease,opacity .32s ease,transform .32s ease,padding .32s ease,border-width .32s ease;
+  }
+  .workspace.preview-mode > .build-panel{
+    grid-column:2;
+    width:100% !important;
+    max-width:none !important;
+    min-width:0 !important;
+    box-sizing:border-box;
+    transition:width .32s ease;
+  }
+  .workspace.preview-mode .composition-preview{width:100%;max-width:none;min-width:0;}
+  .workspace.preview-mode .composition-builds,
+  .workspace.preview-mode .zvz-build-list{width:100%;}
+  .workspace.preview-mode.library-collapsed{
+    grid-template-columns:0 minmax(0,1fr) !important;
+    gap:0;
+  }
+  .workspace.preview-mode.library-collapsed > .presets-panel{
+    width:0 !important;
+    min-width:0 !important;
+    max-width:0 !important;
+  }
+  .workspace.preview-mode.library-collapsed .library-toggle{left:0;}
+}
+
+/* El nombre ocupa menos; el equipamiento gana espacio. */
+.workspace.preview-mode .zvz-build-name{width:125px;flex:0 0 125px;min-width:125px;max-width:125px;}
+.workspace.preview-mode .zvz-player-name{width:100%;box-sizing:border-box;padding:7px 8px;font-size:12px;}
+.workspace.preview-mode .zvz-build-row{gap:7px;}
+.workspace.preview-mode .composition-build-header{flex:0 0 125px;min-width:125px;max-width:125px;}
+.workspace.preview-mode .composition-build-info strong{font-size:12px;}
+.workspace.preview-mode .composition-build-info span{font-size:10px;}
+.workspace.preview-mode .composition-build-info small{font-size:9px;}
+
+@media(min-width:851px) and (max-width:1100px){
+  .library-toggle{left:0;}
+  .workspace.preview-mode .zvz-build-name{width:115px;flex-basis:115px;min-width:115px;max-width:115px;}
+  .workspace.preview-mode .composition-build-header{flex-basis:115px;min-width:115px;max-width:115px;}
+}
+@media(max-width:850px){
+  .library-toggle{position:fixed;left:0;top:50%;width:30px;height:44px;border-radius:0 9px 9px 0;}
+  .workspace:not(.library-collapsed) .library-toggle{left:0;}
+  .workspace.library-collapsed .library-toggle{left:0;}
+  .workspace.preview-mode .zvz-build-name,
+  .workspace.preview-mode .composition-build-header{width:100%;min-width:0;max-width:none;flex-basis:auto;}
+}
+
+
+/* 0.3.110 TEST: la flecha queda fuera y pegada al borde izquierdo del panel visible. */
+@media(min-width:851px){
+  .workspace{overflow:visible;}
+  .library-toggle{left:-32px !important;top:14px !important;width:32px;height:44px;
+    border-left:1px solid var(--border);border-right:0;border-radius:9px 0 0 9px;
+    box-shadow:-8px 6px 18px rgba(0,0,0,.28);
+  }
+  .workspace:not(.library-collapsed) .library-toggle,
+  .workspace.library-collapsed .library-toggle,
+  .workspace.preview-mode.library-collapsed .library-toggle{
+    left:-32px !important;transform:none !important;opacity:1 !important;
+  }
+}
+@media(max-width:850px){
+  .workspace{overflow:visible;}
+}

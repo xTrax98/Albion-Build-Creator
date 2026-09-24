@@ -15,7 +15,7 @@ const I18N = {
     selectWeapon:"Seleccionar objeto", selectorHelp:"Busca por nombre o filtra por categoría.", offhandCompatibility:"Con un arma de una mano puedes elegir cualquier secundaria válida.",
     close:"Cerrar", cancel:"Cancelar", searchPlaceholder:"Buscar objeto...", chooseVariant:"Configura el tier, encantamiento y calidad.", equipmentVariantHelp:"Elige la variante que quieres añadir a la build.", consumableVariantHelp:"Este objeto no utiliza encantamiento ni calidad.",
     savePreset:"Guardar como preset", newBuild:"Nueva build", presets:"Presets", presetsHelp:"Guarda builds para reutilizarlas más tarde.",
-    library:"Biblioteca", libraryHelp:"Organiza tus builds y composiciones.", exportAll:"Exportar todo", importAll:"Importar todo", exportDone:"Datos exportados correctamente.", importDone:"Datos añadidos correctamente. No se ha borrado nada.", importInvalid:"El archivo no es un respaldo válido de Albion Build Creator.", importConfirm:"Los datos del respaldo se añadirán a los que ya tienes. No se borrará nada. ¿Continuar?", myPresets:"Mis presets", myCompositions:"Mis composiciones", myZvZCompositions:"Mis composiciones ZvZ",
+    library:"Biblioteca", libraryHelp:"Organiza tus builds y composiciones.", hideLibrary:"Ocultar biblioteca", showLibrary:"Mostrar biblioteca", exportAll:"Exportar todo", importAll:"Importar todo", exportDone:"Datos exportados correctamente.", importDone:"Datos añadidos correctamente. No se ha borrado nada.", importInvalid:"El archivo no es un respaldo válido de Albion Build Creator.", importConfirm:"Los datos del respaldo se añadirán a los que ya tienes. No se borrará nada. ¿Continuar?", myPresets:"Mis presets", myCompositions:"Mis composiciones", myZvZCompositions:"Mis composiciones ZvZ",
     noPresets:"Todavía no hay presets guardados.", noCompositions:"Todavía no hay composiciones.", compositionsHelp:"Organiza presets por rol.",
     newComposition:"Nueva composición", newZvZComposition:"Nueva composición ZvZ", compositionName:"Nombre de la composición", player:"Jugador", role:"Rol", preset:"Preset", addMember:"Añadir miembro", saveComposition:"Guardar composición", cancel:"Cancelar",
     compositionSaved:"Composición guardada: ", presetsCount:"presets", edit:"Editar", view:"Ver", backToCreator:"Volver al creador", saveNames:"Guardar nombres", screenshotDiscord:"📸 Crear imagen para Discord", screenshotWorking:"Generando imagen...", screenshotDone:"Imagen creada.", screenshotError:"No se pudo crear la imagen.", zvzNamePlaceholder:"Nombre del jugador", zvzPreset:"Preset", zvzCompositionHelp:"Selecciona presets para tu composición ZvZ. Los nombres se ponen desde Ver.", compositionPreview:"Vista previa de la composición", players:"jugadores",
@@ -33,7 +33,7 @@ const I18N = {
     selectWeapon:"Select item", selectorHelp:"Search by name or filter by category.", offhandCompatibility:"With a one-handed weapon you can choose any valid off-hand.",
     close:"Close", cancel:"Cancel", searchPlaceholder:"Search item...", chooseVariant:"Configure tier, enchantment and quality.", equipmentVariantHelp:"Choose the variant you want to add to the build.", consumableVariantHelp:"This item does not use enchantment or quality.",
     savePreset:"Save as preset", newBuild:"New build", presets:"Presets", presetsHelp:"Save builds to reuse them later.",
-    library:"Library", libraryHelp:"Organize your builds and compositions.", exportAll:"Export all", importAll:"Import all", exportDone:"Data exported successfully.", importDone:"Data added successfully. Nothing was deleted.", importInvalid:"This file is not a valid Albion Build Creator backup.", importConfirm:"The backup data will be added to what you already have. Nothing will be deleted. Continue?", myPresets:"My presets", myCompositions:"My compositions", myZvZCompositions:"My ZvZ compositions",
+    library:"Library", libraryHelp:"Organize your builds and compositions.", hideLibrary:"Hide library", showLibrary:"Show library", exportAll:"Export all", importAll:"Import all", exportDone:"Data exported successfully.", importDone:"Data added successfully. Nothing was deleted.", importInvalid:"This file is not a valid Albion Build Creator backup.", importConfirm:"The backup data will be added to what you already have. Nothing will be deleted. Continue?", myPresets:"My presets", myCompositions:"My compositions", myZvZCompositions:"My ZvZ compositions",
     noPresets:"No saved presets yet.", noCompositions:"No compositions yet.", compositionsHelp:"Organize presets by role.",
     newComposition:"New composition", newZvZComposition:"New ZvZ composition", compositionName:"Composition name", player:"Player", role:"Role", preset:"Preset", addMember:"Add member", saveComposition:"Save composition", cancel:"Cancel",
     compositionSaved:"Composition saved: ", presetsCount:"presets", edit:"Edit", view:"View", backToCreator:"Back to creator", saveNames:"Save names", screenshotDiscord:"📸 Create image for Discord", screenshotWorking:"Generating image...", screenshotDone:"Image created.", screenshotError:"Could not create the image.", zvzNamePlaceholder:"Player name", zvzPreset:"Preset", zvzCompositionHelp:"Select presets for your ZvZ composition. Names are entered from View.", compositionPreview:"Composition preview", players:"players",
@@ -387,12 +387,21 @@ async function createDiscordCanvas(){
   if(!preview || preview.classList.contains("hidden")) return null;
   const isZvZ=!!preview.querySelector(".zvz-build-row");
   const title=(preview.querySelector(".composition-preview-head h2")?.textContent||"Composición").trim();
-  const rows=[...(preview.querySelectorAll(isZvZ?".zvz-build-row":".composition-build-card"))];
+  const rows=[...preview.querySelectorAll(isZvZ?".zvz-build-row":".composition-build-card")];
+
+  // Discord image layout: up to 10 players in one column; more than 10 in two columns.
+  const twoColumns=rows.length>10;
   const width=1500;
   const headerH=150;
-  const rowH=isZvZ?126:112;
   const footerH=35;
-  const height=Math.max(360,headerH+rows.length*rowH+footerH);
+  const rowH=twoColumns?108:(isZvZ?126:112);
+  const columns=twoColumns?2:1;
+  const rowsPerColumn=twoColumns?Math.ceil(rows.length/2):rows.length;
+  const gap=16;
+  const outerX=28;
+  const outerW=width-outerX*2;
+  const cardW=twoColumns?(outerW-gap)/2:outerW;
+  const height=Math.max(360,headerH+rowsPerColumn*rowH+footerH);
   const canvas=document.createElement("canvas");
   canvas.width=width;canvas.height=height;
   const ctx=canvas.getContext("2d");
@@ -405,17 +414,24 @@ async function createDiscordCanvas(){
   ctx.fillStyle="#f1f3f5";ctx.font="700 34px Arial,sans-serif";ctx.fillText(title,55,100);
   ctx.fillStyle="#aeb4bd";ctx.font="20px Arial,sans-serif";ctx.textAlign="right";ctx.fillText(`${rows.length} ${t("players")}`,width-55,99);ctx.textAlign="left";
 
-  const iconSize=isZvZ?78:68;
-  const iconGap=10;
-  const startX=isZvZ?585:420;
+  // Smaller icons and compact name area are used in the two-column layout.
+  const iconSize=twoColumns?52:(isZvZ?78:68);
+  const iconGap=twoColumns?5:10;
+  const startX=twoColumns?cardW-9*(iconSize+iconGap)+iconGap-18:(isZvZ?585:420);
   const maxIcons=9;
 
   for(let i=0;i<rows.length;i++){
-    const row=rows[i], y=headerH+i*rowH+8;
-    ctx.fillStyle="#11151a";roundRect(ctx,28,y,width-56,rowH-10,14);ctx.fill();
+    const row=rows[i];
+    const col=twoColumns?(i<rowsPerColumn?0:1):0;
+    const rowIndex=twoColumns?(i%rowsPerColumn):i;
+    const x=twoColumns?outerX+col*(cardW+gap):outerX;
+    const y=headerH+rowIndex*rowH+8;
+    ctx.fillStyle="#11151a";roundRect(ctx,x,y,cardW,rowH-10,14);ctx.fill();
     ctx.strokeStyle="#343941";ctx.lineWidth=2;ctx.stroke();
-    ctx.fillStyle="#20252d";roundRect(ctx,48,y+22,54,54,12);ctx.fill();
-    ctx.fillStyle="#f5a900";ctx.font="700 24px Arial,sans-serif";ctx.textAlign="center";ctx.fillText(String(i+1),75,y+57);ctx.textAlign="left";
+
+    const numberX=x+20;
+    ctx.fillStyle="#20252d";roundRect(ctx,numberX,y+20,46,46,11);ctx.fill();
+    ctx.fillStyle="#f5a900";ctx.font="700 21px Arial,sans-serif";ctx.textAlign="center";ctx.fillText(String(i+1),numberX+23,y+50);ctx.textAlign="left";
 
     let name="",sub="";
     if(isZvZ){
@@ -425,31 +441,33 @@ async function createDiscordCanvas(){
       name=row.querySelector(".composition-build-info strong")?.textContent?.trim() || "-";
       sub=row.querySelector(".composition-build-info span")?.textContent?.trim() || "-";
     }
-    ctx.fillStyle="#f1f3f5";ctx.font="700 24px Arial,sans-serif";
-    const maxNameW=startX-135;
+
+    const localStartX=twoColumns?x+82:startX;
+    const iconsStartX=twoColumns?x+cardW-9*(iconSize+iconGap)+iconGap-14:startX;
+    ctx.fillStyle="#f1f3f5";ctx.font=twoColumns?"700 20px Arial,sans-serif":"700 24px Arial,sans-serif";
+    const maxNameW=Math.max(90,iconsStartX-localStartX-12);
     let shown=name;
     while(ctx.measureText(shown).width>maxNameW && shown.length>4) shown=shown.slice(0,-2)+"…";
-    ctx.fillText(shown,125,y+42);
-    ctx.fillStyle="#aeb4bd";ctx.font="18px Arial,sans-serif";ctx.fillText(sub,125,y+70);
+    ctx.fillText(shown,localStartX,y+39);
+    ctx.fillStyle="#aeb4bd";ctx.font=twoColumns?"15px Arial,sans-serif":"18px Arial,sans-serif";ctx.fillText(sub,localStartX,y+64);
 
     const imgs=[...row.querySelectorAll(".composition-icon img")];
     const loaded=await Promise.all(imgs.slice(0,maxIcons).map(async imgEl=>{
       try{return await loadCanvasImage(imgEl.currentSrc||imgEl.src);}
-      catch(err){console.warn("Icono no disponible para la imagen de Discord:", imgEl.alt, err); return null;}
+      catch(err){console.warn("Icono no disponible para la imagen de Discord:",imgEl.alt,err);return null;}
     }));
     for(let j=0;j<loaded.length;j++){
-      const x=startX+j*(iconSize+iconGap), iy=y+(rowH-10-iconSize)/2;
-      ctx.fillStyle="#20252d";roundRect(ctx,x,iy,iconSize,iconSize,10);ctx.fill();
+      const ix=iconsStartX+j*(iconSize+iconGap);
+      const iy=y+(rowH-10-iconSize)/2;
+      ctx.fillStyle="#20252d";roundRect(ctx,ix,iy,iconSize,iconSize,8);ctx.fill();
       const img=loaded[j];
-      if(img){
-        ctx.save();roundRect(ctx,x+2,iy+2,iconSize-4,iconSize-4,8);ctx.clip();drawCanvasImageCover(ctx,img,x+2,iy+2,iconSize-4,iconSize-4);ctx.restore();}
-      ctx.strokeStyle="#454b55";ctx.lineWidth=2;roundRect(ctx,x,iy,iconSize,iconSize,10);ctx.stroke();
+      if(img){ctx.save();roundRect(ctx,ix+2,iy+2,iconSize-4,iconSize-4,7);ctx.clip();drawCanvasImageCover(ctx,img,ix+2,iy+2,iconSize-4,iconSize-4);ctx.restore();}
+      ctx.strokeStyle="#454b55";ctx.lineWidth=2;roundRect(ctx,ix,iy,iconSize,iconSize,8);ctx.stroke();
     }
   }
   ctx.fillStyle="#666d77";ctx.font="15px Arial,sans-serif";ctx.textAlign="center";ctx.fillText("Albion Build Creator by xTrux",width/2,height-12);ctx.textAlign="left";
   return canvas;
 }
-
 async function createCompositionImage(){
   try{
     const canvas=await createDiscordCanvas();
@@ -481,7 +499,7 @@ function showZvZPreview(id){
   const composition=getZvZCompositions().find(x=>x.id===id);if(!composition)return;viewedZvZCompositionId=id;viewedCompositionId=null;
   const creator=$("#buildCreatorView"),preview=$("#compositionPreview"),workspace=document.querySelector(".workspace"),presets=getPresets(),members=composition.members||[];
   const slotOrder=["mainhand","offhand","head","armor","shoes","cape","bag","potion","food"];
-  preview.innerHTML=`<div class="composition-preview-head"><div><div class="preview-kicker">${escapeHtml(t("compositionPreview"))} · ZvZ</div><h2>${escapeHtml(composition.name)}</h2><p>${members.length} ${escapeHtml(t("players"))}</p></div><button id="closeCompositionPreview" class="ghost" type="button">${escapeHtml(t("backToCreator"))}</button></div><div class="zvz-build-list">${members.length?members.map((member,index)=>{const preset=presets.find(p=>p.id===member.presetId),build=preset?.build||{},currentName=member.displayName||`${t("player")} ${index+1}`;return `<article class="zvz-build-row"><div class="zvz-build-number">${index+1}</div><div class="zvz-build-name"><input class="zvz-player-name" data-zvz-name="${escapeHtml(member.id)}" maxlength="40" value="${escapeHtml(currentName)}" placeholder="${escapeHtml(t("zvzNamePlaceholder"))}"><small>${escapeHtml(preset?.name||"-")}</small></div><div class="composition-build-grid">${slotOrder.map(slot=>{const item=build[slot];if(slot==="offhand"&&(!item||(build.mainhand&&item.id===build.mainhand.id)))return "";if(!item)return "";return `<div class="composition-icon" title="${escapeHtml(item.name||"")}"><img src="${iconUrl(item.id,item.enchant||0,item.quality||1)}" alt="${escapeHtml(item.name||"")}" onerror="this.style.opacity='.25'"></div>`;}).join("")}</div></article>`;}).join(""): `<div class="library-empty"><strong>${escapeHtml(t("noCompositions"))}</strong></div>`}</div><div class="zvz-preview-actions"><button id="captureZvZImage" class="ghost" type="button">${escapeHtml(t("screenshotDiscord"))}</button><button id="saveZvZNames" class="primary" type="button">${escapeHtml(t("saveNames"))}</button></div>`;
+  preview.innerHTML=`<div class="composition-preview-head"><div><div class="preview-kicker">${escapeHtml(t("compositionPreview"))} · ZvZ</div><h2>${escapeHtml(composition.name)}</h2><p>${members.length} ${escapeHtml(t("players"))}</p></div><button id="closeCompositionPreview" class="ghost" type="button">${escapeHtml(t("backToCreator"))}</button></div><div class="zvz-build-list${members.length > 10 ? " many-players" : ""}">${members.length?members.map((member,index)=>{const preset=presets.find(p=>p.id===member.presetId),build=preset?.build||{},currentName=member.displayName||`${t("player")} ${index+1}`;return `<article class="zvz-build-row"><div class="zvz-build-number">${index+1}</div><div class="zvz-build-name"><input class="zvz-player-name" data-zvz-name="${escapeHtml(member.id)}" maxlength="40" value="${escapeHtml(currentName)}" placeholder="${escapeHtml(t("zvzNamePlaceholder"))}"><small>${escapeHtml(preset?.name||"-")}</small></div><div class="composition-build-grid">${slotOrder.map(slot=>{const item=build[slot];if(slot==="offhand"&&(!item||(build.mainhand&&item.id===build.mainhand.id)))return "";if(!item)return "";return `<div class="composition-icon" title="${escapeHtml(item.name||"")}"><img src="${iconUrl(item.id,item.enchant||0,item.quality||1)}" alt="${escapeHtml(item.name||"")}" onerror="this.style.opacity='.25'"></div>`;}).join("")}</div></article>`;}).join(""): `<div class="library-empty"><strong>${escapeHtml(t("noCompositions"))}</strong></div>`}</div><div class="zvz-preview-actions"><button id="captureZvZImage" class="ghost" type="button">${escapeHtml(t("screenshotDiscord"))}</button><button id="saveZvZNames" class="primary" type="button">${escapeHtml(t("saveNames"))}</button></div>`;
   creator.classList.add("hidden");preview.classList.remove("hidden");workspace?.classList.add("preview-mode");$("#selector")?.classList.add("hidden");$("#itemEditor")?.classList.add("hidden");state.activeSlot=null;state.selectedBase=null;document.querySelectorAll(".slot").forEach(s=>s.classList.remove("selected"));
   $("#closeCompositionPreview").addEventListener("click",hideCompositionPreview);$("#saveZvZNames").addEventListener("click",saveZvZNames);$("#captureZvZImage").addEventListener("click",handleCompositionImageButton);
 }
@@ -510,7 +528,7 @@ function showCompositionPreview(id){
       </div>
       <button id="closeCompositionPreview" class="ghost" type="button">${escapeHtml(t("backToCreator"))}</button>
     </div>
-    <div class="composition-builds">
+    <div class="composition-builds${members.length > 10 ? " many-players" : ""}">
       ${members.length ? members.map((member,index)=>{
         const preset = presets.find(p=>p.id===member.presetId);
         const build = preset?.build || {};
@@ -880,6 +898,21 @@ function setLibraryTab(tab){
   window.addEventListener('resize',()=>{ if(sourceMenu && portal) openPortal(sourceMenu); });
   window.addEventListener('scroll',()=>{ if(sourceMenu && portal) openPortal(sourceMenu); },true);
 })();
+
+
+const libraryToggle = $("#toggleLibrary");
+const workspaceEl = $("#workspace");
+function setLibraryCollapsed(collapsed){
+  if(!workspaceEl || !libraryToggle) return;
+  workspaceEl.classList.toggle("library-collapsed", collapsed);
+  libraryToggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
+  const arrow = libraryToggle.querySelector(".library-arrow");
+  if(arrow) arrow.textContent = collapsed ? "›" : "‹";
+  const labelKey = collapsed ? "showLibrary" : "hideLibrary";
+  libraryToggle.setAttribute("aria-label", t(labelKey));
+  libraryToggle.title = t(labelKey);
+}
+libraryToggle?.addEventListener("click",()=>setLibraryCollapsed(!workspaceEl?.classList.contains("library-collapsed")));
 
 document.querySelectorAll("[data-library-tab]").forEach(b=>b.addEventListener("click",()=>setLibraryTab(b.dataset.libraryTab)));
 $("#newComposition")?.addEventListener("click",()=>openCompositionEditor());

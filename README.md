@@ -1,3 +1,3 @@
-Albion Build Creator 0.3.104 TEST
+Albion Build Creator TEST 0.3.111
 
-Mejora de generación de imágenes para Discord: carga CORS segura de iconos de objetos.
+Discord composition images now use two columns whenever there are more than 10 players.
