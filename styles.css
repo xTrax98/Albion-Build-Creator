@@ -1000,6 +1000,18 @@ button,.ghost,.library-tab,.slot,.result{transition:border-color .15s,background
   z-index:2147483647 !important;
 }
 
+/* 0.3.95: when an action menu is open, other library cards must not receive clicks through it. */
+.presets-list:has(.action-menu[open]) .preset-card:not(:has(.action-menu[open])),
+#compositionList:has(.action-menu[open]) .composition-card:not(:has(.action-menu[open])),
+#zvzList:has(.action-menu[open]) .composition-card:not(:has(.action-menu[open])){
+  pointer-events:none !important;
+}
+.presets-list:has(.action-menu[open]) .preset-card:has(.action-menu[open]),
+#compositionList:has(.action-menu[open]) .composition-card:has(.action-menu[open]),
+#zvzList:has(.action-menu[open]) .composition-card:has(.action-menu[open]){
+  pointer-events:auto !important;
+}
+
 /* 0.3.93: action menus are a true top layer inside the library. */
 .library-section:has(.action-menu[open]){
   z-index:2147483000 !important;
