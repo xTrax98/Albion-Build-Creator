@@ -1100,3 +1100,23 @@ button,.ghost,.library-tab,.slot,.result{transition:border-color .15s,background
   visibility:hidden !important;
   pointer-events:none !important;
 }
+
+/* 0.3.99: export composition image */
+.composition-preview-actions{display:flex;justify-content:flex-end;margin-top:14px}
+.zvz-preview-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
+@media(max-width:680px){.composition-preview-actions,.zvz-preview-actions{justify-content:stretch}.composition-preview-actions button,.zvz-preview-actions button{flex:1}}
+
+
+/* 0.3.101 TEST: interaction shield below the portaled action menu. */
+.action-menu-shield{
+  position:fixed !important;
+  inset:0 !important;
+  z-index:2147483646 !important;
+  background:transparent !important;
+  pointer-events:auto !important;
+  touch-action:none;
+}
+.action-menu-portal{
+  z-index:2147483647 !important;
+  pointer-events:auto !important;
+}

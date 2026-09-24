@@ -1,3 +1,3 @@
-# Albion Build Creator 0.3.98 TEST
+Albion Build Creator 0.3.104 TEST
 
-Cache-busting for app.js and styles.css using version query parameters. This does not clear or modify localStorage.
+Mejora de generación de imágenes para Discord: carga CORS segura de iconos de objetos.

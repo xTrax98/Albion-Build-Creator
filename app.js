@@ -18,7 +18,7 @@ const I18N = {
     library:"Biblioteca", libraryHelp:"Organiza tus builds y composiciones.", exportAll:"Exportar todo", importAll:"Importar todo", exportDone:"Datos exportados correctamente.", importDone:"Datos añadidos correctamente. No se ha borrado nada.", importInvalid:"El archivo no es un respaldo válido de Albion Build Creator.", importConfirm:"Los datos del respaldo se añadirán a los que ya tienes. No se borrará nada. ¿Continuar?", myPresets:"Mis presets", myCompositions:"Mis composiciones", myZvZCompositions:"Mis composiciones ZvZ",
     noPresets:"Todavía no hay presets guardados.", noCompositions:"Todavía no hay composiciones.", compositionsHelp:"Organiza presets por rol.",
     newComposition:"Nueva composición", newZvZComposition:"Nueva composición ZvZ", compositionName:"Nombre de la composición", player:"Jugador", role:"Rol", preset:"Preset", addMember:"Añadir miembro", saveComposition:"Guardar composición", cancel:"Cancelar",
-    compositionSaved:"Composición guardada: ", presetsCount:"presets", edit:"Editar", view:"Ver", backToCreator:"Volver al creador", saveNames:"Guardar nombres", zvzNamePlaceholder:"Nombre del jugador", zvzPreset:"Preset", zvzCompositionHelp:"Selecciona presets para tu composición ZvZ. Los nombres se ponen desde Ver.", compositionPreview:"Vista previa de la composición", players:"jugadores",
+    compositionSaved:"Composición guardada: ", presetsCount:"presets", edit:"Editar", view:"Ver", backToCreator:"Volver al creador", saveNames:"Guardar nombres", screenshotDiscord:"📸 Crear imagen para Discord", screenshotWorking:"Generando imagen...", screenshotDone:"Imagen creada.", screenshotError:"No se pudo crear la imagen.", zvzNamePlaceholder:"Nombre del jugador", zvzPreset:"Preset", zvzCompositionHelp:"Selecciona presets para tu composición ZvZ. Los nombres se ponen desde Ver.", compositionPreview:"Vista previa de la composición", players:"jugadores",
     load:"Cargar", duplicate:"Duplicar", rename:"Cambiar nombre", delete:"Eliminar", saved:"Preset guardado: ",
     voiceBuild:"Crear build por voz", voiceListeningTitle:"Build por voz", voiceHelp:"Di los objetos de la build en cualquier orden.", voiceReady:"Pulsa el micrófono y habla.", startListening:"Escuchar", stopListening:"Parar", applyVoice:"Aplicar a la build", voiceUnsupported:"Tu navegador no admite reconocimiento de voz.", voiceListening:"Escuchando...", voiceNothing:"No he entendido ningún objeto.", voiceFound:"He encontrado:", voiceAmbiguous:"No he podido identificar con seguridad:", voiceApplied:"Build aplicada desde voz.", voiceStarting:"Activando micrófono...", voiceNoMatch:"No he detectado una frase clara. Prueba a hablar más cerca del micrófono.", voiceAudioStart:"Micrófono activo. Habla ahora.", voiceStartError:"No se pudo iniciar el reconocimiento.", clearVoice:"Limpiar", voiceSearching:"Buscando objetos...", voiceCleared:"Texto de voz limpiado.", voiceProcess:"Buscar objetos", voiceReadyToProcess:"Texto capturado. Pulsa Buscar objetos.",
     allCategories:"Todas las categorías", loading:"Cargando objetos...", tier:"Tier",
@@ -36,7 +36,7 @@ const I18N = {
     library:"Library", libraryHelp:"Organize your builds and compositions.", exportAll:"Export all", importAll:"Import all", exportDone:"Data exported successfully.", importDone:"Data added successfully. Nothing was deleted.", importInvalid:"This file is not a valid Albion Build Creator backup.", importConfirm:"The backup data will be added to what you already have. Nothing will be deleted. Continue?", myPresets:"My presets", myCompositions:"My compositions", myZvZCompositions:"My ZvZ compositions",
     noPresets:"No saved presets yet.", noCompositions:"No compositions yet.", compositionsHelp:"Organize presets by role.",
     newComposition:"New composition", newZvZComposition:"New ZvZ composition", compositionName:"Composition name", player:"Player", role:"Role", preset:"Preset", addMember:"Add member", saveComposition:"Save composition", cancel:"Cancel",
-    compositionSaved:"Composition saved: ", presetsCount:"presets", edit:"Edit", view:"View", backToCreator:"Back to creator", saveNames:"Save names", zvzNamePlaceholder:"Player name", zvzPreset:"Preset", zvzCompositionHelp:"Select presets for your ZvZ composition. Names are entered from View.", compositionPreview:"Composition preview", players:"players",
+    compositionSaved:"Composition saved: ", presetsCount:"presets", edit:"Edit", view:"View", backToCreator:"Back to creator", saveNames:"Save names", screenshotDiscord:"📸 Create image for Discord", screenshotWorking:"Generating image...", screenshotDone:"Image created.", screenshotError:"Could not create the image.", zvzNamePlaceholder:"Player name", zvzPreset:"Preset", zvzCompositionHelp:"Select presets for your ZvZ composition. Names are entered from View.", compositionPreview:"Composition preview", players:"players",
     load:"Load", duplicate:"Duplicate", rename:"Rename", delete:"Delete", saved:"Preset saved: ",
     voiceBuild:"Create build by voice", voiceListeningTitle:"Build by voice", voiceHelp:"Say the build items in any order.", voiceReady:"Press the microphone and speak.", startListening:"Listen", stopListening:"Stop", applyVoice:"Apply to build", voiceUnsupported:"Your browser does not support speech recognition.", voiceListening:"Listening...", voiceNothing:"I could not understand any item.", voiceFound:"Found:", voiceAmbiguous:"I could not identify with confidence:", voiceApplied:"Build applied from voice.", voiceStarting:"Activating microphone...", voiceNoMatch:"I did not detect a clear phrase. Try speaking closer to the microphone.", voiceAudioStart:"Microphone active. Speak now.", voiceStartError:"Could not start speech recognition.", clearVoice:"Clear", voiceSearching:"Searching items...", voiceCleared:"Voice text cleared.", voiceProcess:"Find objects", voiceReadyToProcess:"Text captured. Press Find objects.",
     allCategories:"All categories", loading:"Loading items...", tier:"Tier",
@@ -347,13 +347,143 @@ function saveZvZEditor(){
 
 function deleteZvZ(id){if(viewedZvZCompositionId===id)hideCompositionPreview();saveZvZCompositions(getZvZCompositions().filter(x=>x.id!==id));renderZvZCompositions();}
 
+async function loadCanvasImage(src){
+  // Albion Render puede servir el icono en la página, pero el canvas necesita CORS.
+  // Probamos la URL original y, si no permite exportación desde canvas, usamos
+  // un proxy de imágenes con CORS únicamente para crear el PNG de Discord.
+  const direct = await new Promise((resolve)=>{
+    const img=new Image();
+    img.crossOrigin="anonymous";
+    img.onload=()=>resolve(img);
+    img.onerror=()=>resolve(null);
+    img.src=src;
+  });
+  if(direct && direct.naturalWidth>0) return direct;
+
+  const proxy=`https://images.weserv.nl/?url=${encodeURIComponent(src)}`;
+  return await new Promise((resolve,reject)=>{
+    const img=new Image();
+    img.crossOrigin="anonymous";
+    img.onload=()=>img.naturalWidth>0 ? resolve(img) : reject(new Error("Imagen vacía"));
+    img.onerror=()=>reject(new Error("No se pudo cargar el icono"));
+    img.src=proxy;
+  });
+}
+function roundRect(ctx,x,y,w,h,r){
+  const rr=Math.min(r,w/2,h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+rr,y);ctx.arcTo(x+w,y,x+w,y+h,rr);ctx.arcTo(x+w,y+h,x,y+h,rr);ctx.arcTo(x,y+h,x,y,rr);ctx.arcTo(x,y,x+w,y,rr);ctx.closePath();
+}
+
+function drawCanvasImageCover(ctx,img,x,y,w,h){
+  const scale=Math.max(w/img.naturalWidth,h/img.naturalHeight);
+  const sw=w/scale, sh=h/scale;
+  const sx=(img.naturalWidth-sw)/2, sy=(img.naturalHeight-sh)/2;
+  ctx.drawImage(img,sx,sy,sw,sh,x,y,w,h);
+}
+
+async function createDiscordCanvas(){
+  const preview=$("#compositionPreview");
+  if(!preview || preview.classList.contains("hidden")) return null;
+  const isZvZ=!!preview.querySelector(".zvz-build-row");
+  const title=(preview.querySelector(".composition-preview-head h2")?.textContent||"Composición").trim();
+  const rows=[...(preview.querySelectorAll(isZvZ?".zvz-build-row":".composition-build-card"))];
+  const width=1500;
+  const headerH=150;
+  const rowH=isZvZ?126:112;
+  const footerH=35;
+  const height=Math.max(360,headerH+rows.length*rowH+footerH);
+  const canvas=document.createElement("canvas");
+  canvas.width=width;canvas.height=height;
+  const ctx=canvas.getContext("2d");
+  ctx.fillStyle="#0b0d10";ctx.fillRect(0,0,width,height);
+
+  // Header
+  ctx.fillStyle="#15191f";roundRect(ctx,28,24,width-56,104,16);ctx.fill();
+  ctx.strokeStyle="#343941";ctx.lineWidth=2;ctx.stroke();
+  ctx.fillStyle="#f5a900";ctx.font="700 28px Arial,sans-serif";ctx.fillText(`${t("compositionPreview")}${isZvZ?" · ZvZ":""}`,55,60);
+  ctx.fillStyle="#f1f3f5";ctx.font="700 34px Arial,sans-serif";ctx.fillText(title,55,100);
+  ctx.fillStyle="#aeb4bd";ctx.font="20px Arial,sans-serif";ctx.textAlign="right";ctx.fillText(`${rows.length} ${t("players")}`,width-55,99);ctx.textAlign="left";
+
+  const iconSize=isZvZ?78:68;
+  const iconGap=10;
+  const startX=isZvZ?585:420;
+  const maxIcons=9;
+
+  for(let i=0;i<rows.length;i++){
+    const row=rows[i], y=headerH+i*rowH+8;
+    ctx.fillStyle="#11151a";roundRect(ctx,28,y,width-56,rowH-10,14);ctx.fill();
+    ctx.strokeStyle="#343941";ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle="#20252d";roundRect(ctx,48,y+22,54,54,12);ctx.fill();
+    ctx.fillStyle="#f5a900";ctx.font="700 24px Arial,sans-serif";ctx.textAlign="center";ctx.fillText(String(i+1),75,y+57);ctx.textAlign="left";
+
+    let name="",sub="";
+    if(isZvZ){
+      name=row.querySelector(".zvz-player-name")?.value?.trim() || row.querySelector(".zvz-player-name")?.placeholder || `${t("player")} ${i+1}`;
+      sub=row.querySelector(".zvz-build-name small")?.textContent?.trim() || "-";
+    }else{
+      name=row.querySelector(".composition-build-info strong")?.textContent?.trim() || "-";
+      sub=row.querySelector(".composition-build-info span")?.textContent?.trim() || "-";
+    }
+    ctx.fillStyle="#f1f3f5";ctx.font="700 24px Arial,sans-serif";
+    const maxNameW=startX-135;
+    let shown=name;
+    while(ctx.measureText(shown).width>maxNameW && shown.length>4) shown=shown.slice(0,-2)+"…";
+    ctx.fillText(shown,125,y+42);
+    ctx.fillStyle="#aeb4bd";ctx.font="18px Arial,sans-serif";ctx.fillText(sub,125,y+70);
+
+    const imgs=[...row.querySelectorAll(".composition-icon img")];
+    const loaded=await Promise.all(imgs.slice(0,maxIcons).map(async imgEl=>{
+      try{return await loadCanvasImage(imgEl.currentSrc||imgEl.src);}
+      catch(err){console.warn("Icono no disponible para la imagen de Discord:", imgEl.alt, err); return null;}
+    }));
+    for(let j=0;j<loaded.length;j++){
+      const x=startX+j*(iconSize+iconGap), iy=y+(rowH-10-iconSize)/2;
+      ctx.fillStyle="#20252d";roundRect(ctx,x,iy,iconSize,iconSize,10);ctx.fill();
+      const img=loaded[j];
+      if(img){
+        ctx.save();roundRect(ctx,x+2,iy+2,iconSize-4,iconSize-4,8);ctx.clip();drawCanvasImageCover(ctx,img,x+2,iy+2,iconSize-4,iconSize-4);ctx.restore();}
+      ctx.strokeStyle="#454b55";ctx.lineWidth=2;roundRect(ctx,x,iy,iconSize,iconSize,10);ctx.stroke();
+    }
+  }
+  ctx.fillStyle="#666d77";ctx.font="15px Arial,sans-serif";ctx.textAlign="center";ctx.fillText("Albion Build Creator by xTrux",width/2,height-12);ctx.textAlign="left";
+  return canvas;
+}
+
+async function createCompositionImage(){
+  try{
+    const canvas=await createDiscordCanvas();
+    if(!canvas) return false;
+    const link=document.createElement("a");
+    const title=($("#compositionPreview .composition-preview-head h2")?.textContent||"composicion").trim().replace(/[^a-z0-9áéíóúüñ _-]/gi,"").replace(/\s+/g,"-")||"composicion";
+    link.download=`${title}-discord.png`;
+    link.href=canvas.toDataURL("image/png");
+    document.body.appendChild(link);link.click();link.remove();
+    return true;
+  }catch(err){
+    console.error("Error creando imagen de composición:",err);
+    return false;
+  }
+}
+
+async function handleCompositionImageButton(){
+  const button=this;
+  if(button.disabled) return;
+  button.disabled=true;
+  const old=button.textContent;
+  button.textContent=t("screenshotWorking");
+  const ok=await createCompositionImage();
+  button.textContent=ok?t("screenshotDone"):t("screenshotError");
+  setTimeout(()=>{button.textContent=old;button.disabled=false;},1400);
+}
+
 function showZvZPreview(id){
   const composition=getZvZCompositions().find(x=>x.id===id);if(!composition)return;viewedZvZCompositionId=id;viewedCompositionId=null;
   const creator=$("#buildCreatorView"),preview=$("#compositionPreview"),workspace=document.querySelector(".workspace"),presets=getPresets(),members=composition.members||[];
   const slotOrder=["mainhand","offhand","head","armor","shoes","cape","bag","potion","food"];
-  preview.innerHTML=`<div class="composition-preview-head"><div><div class="preview-kicker">${escapeHtml(t("compositionPreview"))} · ZvZ</div><h2>${escapeHtml(composition.name)}</h2><p>${members.length} ${escapeHtml(t("players"))}</p></div><button id="closeCompositionPreview" class="ghost" type="button">${escapeHtml(t("backToCreator"))}</button></div><div class="zvz-build-list">${members.length?members.map((member,index)=>{const preset=presets.find(p=>p.id===member.presetId),build=preset?.build||{},currentName=member.displayName||`${t("player")} ${index+1}`;return `<article class="zvz-build-row"><div class="zvz-build-number">${index+1}</div><div class="zvz-build-name"><input class="zvz-player-name" data-zvz-name="${escapeHtml(member.id)}" maxlength="40" value="${escapeHtml(currentName)}" placeholder="${escapeHtml(t("zvzNamePlaceholder"))}"><small>${escapeHtml(preset?.name||"-")}</small></div><div class="composition-build-grid">${slotOrder.map(slot=>{const item=build[slot];if(slot==="offhand"&&(!item||(build.mainhand&&item.id===build.mainhand.id)))return "";if(!item)return "";return `<div class="composition-icon" title="${escapeHtml(item.name||"")}"><img src="${iconUrl(item.id,item.enchant||0,item.quality||1)}" alt="${escapeHtml(item.name||"")}" onerror="this.style.opacity='.25'"></div>`;}).join("")}</div></article>`;}).join(""): `<div class="library-empty"><strong>${escapeHtml(t("noCompositions"))}</strong></div>`}</div><div class="zvz-preview-actions"><button id="saveZvZNames" class="primary" type="button">${escapeHtml(t("saveNames"))}</button></div>`;
+  preview.innerHTML=`<div class="composition-preview-head"><div><div class="preview-kicker">${escapeHtml(t("compositionPreview"))} · ZvZ</div><h2>${escapeHtml(composition.name)}</h2><p>${members.length} ${escapeHtml(t("players"))}</p></div><button id="closeCompositionPreview" class="ghost" type="button">${escapeHtml(t("backToCreator"))}</button></div><div class="zvz-build-list">${members.length?members.map((member,index)=>{const preset=presets.find(p=>p.id===member.presetId),build=preset?.build||{},currentName=member.displayName||`${t("player")} ${index+1}`;return `<article class="zvz-build-row"><div class="zvz-build-number">${index+1}</div><div class="zvz-build-name"><input class="zvz-player-name" data-zvz-name="${escapeHtml(member.id)}" maxlength="40" value="${escapeHtml(currentName)}" placeholder="${escapeHtml(t("zvzNamePlaceholder"))}"><small>${escapeHtml(preset?.name||"-")}</small></div><div class="composition-build-grid">${slotOrder.map(slot=>{const item=build[slot];if(slot==="offhand"&&(!item||(build.mainhand&&item.id===build.mainhand.id)))return "";if(!item)return "";return `<div class="composition-icon" title="${escapeHtml(item.name||"")}"><img src="${iconUrl(item.id,item.enchant||0,item.quality||1)}" alt="${escapeHtml(item.name||"")}" onerror="this.style.opacity='.25'"></div>`;}).join("")}</div></article>`;}).join(""): `<div class="library-empty"><strong>${escapeHtml(t("noCompositions"))}</strong></div>`}</div><div class="zvz-preview-actions"><button id="captureZvZImage" class="ghost" type="button">${escapeHtml(t("screenshotDiscord"))}</button><button id="saveZvZNames" class="primary" type="button">${escapeHtml(t("saveNames"))}</button></div>`;
   creator.classList.add("hidden");preview.classList.remove("hidden");workspace?.classList.add("preview-mode");$("#selector")?.classList.add("hidden");$("#itemEditor")?.classList.add("hidden");state.activeSlot=null;state.selectedBase=null;document.querySelectorAll(".slot").forEach(s=>s.classList.remove("selected"));
-  $("#closeCompositionPreview").addEventListener("click",hideCompositionPreview);$("#saveZvZNames").addEventListener("click",saveZvZNames);
+  $("#closeCompositionPreview").addEventListener("click",hideCompositionPreview);$("#saveZvZNames").addEventListener("click",saveZvZNames);$("#captureZvZImage").addEventListener("click",handleCompositionImageButton);
 }
 
 function saveZvZNames(){const id=viewedZvZCompositionId;if(!id)return;const list=getZvZCompositions(),comp=list.find(x=>x.id===id);if(!comp)return;document.querySelectorAll("[data-zvz-name]").forEach(input=>{const m=comp.members.find(x=>x.id===input.dataset.zvzName);if(m)m.displayName=input.value.trim();});saveZvZCompositions(list);renderZvZCompositions();showZvZPreview(id);}
@@ -406,7 +536,8 @@ function showCompositionPreview(id){
           </div>
         </article>`;
       }).join("") : `<div class="library-empty"><strong>${escapeHtml(t("noCompositions"))}</strong></div>`}
-    </div>`;
+    </div>
+    <div class="composition-preview-actions"><button id="captureCompositionImage" class="primary" type="button">${escapeHtml(t("screenshotDiscord"))}</button></div>`;
   // La vista previa sustituye completamente al creador en el panel central.
   creator.classList.add("hidden");
   preview.classList.remove("hidden");
@@ -417,6 +548,7 @@ function showCompositionPreview(id){
   state.selectedBase = null;
   document.querySelectorAll(".slot").forEach(s=>s.classList.remove("selected"));
   $("#closeCompositionPreview").addEventListener("click",hideCompositionPreview);
+  $("#captureCompositionImage").addEventListener("click",handleCompositionImageButton);
 }
 
 function hideCompositionPreview(){
@@ -631,96 +763,122 @@ function setLibraryTab(tab){
   }
 }
 
-/* 0.3.97 TEST: action menus are rendered in a body-level portal.
-   This removes them from every library/card stacking and overflow context, so
-   the menu is visually and interactively above absolutely everything. */
+/* 0.3.101 TEST: action menu gets a full-screen interaction shield.
+   The menu is portaled to <body> and a fixed backdrop sits underneath it,
+   so absolutely nothing behind the menu can receive a click/tap. */
 (function installActionMenuPortal(){
   let portal = null;
+  let shield = null;
   let sourceMenu = null;
 
   function closePortal(){
-    document.querySelectorAll(".action-menu[open]").forEach(menu=>menu.removeAttribute("open"));
     if(portal){ portal.remove(); portal=null; }
+    if(shield){ shield.remove(); shield=null; }
     sourceMenu=null;
   }
 
   function runPortalAction(button){
-    const attrs = button.dataset;
+    // Read the exact data-* attributes from the cloned button. This is deliberately
+    // explicit for ZvZ as well, so its actions do not depend on DOMStringMap naming.
+    const actionMap = [
+      ['data-load-preset', loadPreset],
+      ['data-duplicate-preset', duplicatePreset],
+      ['data-rename-preset', renamePreset],
+      ['data-delete-preset', deletePreset],
+      ['data-view-composition', showCompositionPreview],
+      ['data-duplicate-composition', duplicateComposition],
+      ['data-rename-composition', renameComposition],
+      ['data-edit-composition', openCompositionEditor],
+      ['data-delete-composition', deleteComposition],
+      ['data-view-zvz', showZvZPreview],
+      ['data-duplicate-zvz', duplicateZvZ],
+      ['data-rename-zvz', renameZvZ],
+      ['data-edit-zvz', openZvZEditor],
+      ['data-delete-zvz', deleteZvZ]
+    ];
+    let fn=null, id=null;
+    for(const [attr,handler] of actionMap){
+      const value=button.getAttribute(attr);
+      if(value!==null){ fn=handler; id=value; break; }
+    }
+    if(!fn) return;
     closePortal();
-    if(attrs.loadPreset) return loadPreset(attrs.loadPreset);
-    if(attrs.duplicatePreset) return duplicatePreset(attrs.duplicatePreset);
-    if(attrs.renamePreset) return renamePreset(attrs.renamePreset);
-    if(attrs.deletePreset) return deletePreset(attrs.deletePreset);
-    if(attrs.viewComposition) return showCompositionPreview(attrs.viewComposition);
-    if(attrs.duplicateComposition) return duplicateComposition(attrs.duplicateComposition);
-    if(attrs.renameComposition) return renameComposition(attrs.renameComposition);
-    if(attrs.editComposition) return openCompositionEditor(attrs.editComposition);
-    if(attrs.deleteComposition) return deleteComposition(attrs.deleteComposition);
-    if(attrs.viewZvZ) return showZvZPreview(attrs.viewZvZ);
-    if(attrs.duplicateZvZ) return duplicateZvZ(attrs.duplicateZvZ);
-    if(attrs.renameZvZ) return renameZvZ(attrs.renameZvZ);
-    if(attrs.editZvZ) return openZvZEditor(attrs.editZvZ);
-    if(attrs.deleteZvZ) return deleteZvZComposition(attrs.deleteZvZ);
+    // Run after the portal/shield have been removed so the underlying UI can
+    // safely update itself, especially on touch devices.
+    window.setTimeout(()=>fn(id),0);
   }
 
   function openPortal(details){
     closePortal();
     sourceMenu=details;
-    details.setAttribute("open","");
+    const trigger=details?.querySelector('.action-menu-trigger');
+    const dropdown=details?.querySelector('.action-menu-dropdown');
+    if(!trigger || !dropdown) return;
 
-    portal=document.createElement("div");
-    portal.className="action-menu-portal";
-    portal.innerHTML=details.querySelector(".action-menu-dropdown")?.innerHTML || "";
+    // Full-screen shield: nothing behind the menu can be clicked/tapped.
+    shield=document.createElement('div');
+    shield.className='action-menu-shield';
+    shield.setAttribute('aria-hidden','true');
+    document.body.appendChild(shield);
+    shield.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();closePortal();},true);
+    shield.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();},true);
+
+    portal=document.createElement('div');
+    portal.className='action-menu-portal';
+    portal.setAttribute('role','menu');
+    portal.innerHTML=dropdown.innerHTML;
     document.body.appendChild(portal);
 
-    const trigger=details.querySelector(".action-menu-trigger");
     const r=trigger.getBoundingClientRect();
-    portal.style.width=Math.max(150, Math.ceil(r.width + 100))+"px";
+    const width=Math.max(150, Math.ceil(r.width + 100));
+    portal.style.width=width+'px';
 
-    const gap=6;
     const menuRect=portal.getBoundingClientRect();
-    let left=Math.min(r.right-menuRect.width, window.innerWidth-8);
-    left=Math.max(8,left);
+    const gap=6;
+    let left=r.right-menuRect.width;
+    left=Math.max(8,Math.min(left,window.innerWidth-menuRect.width-8));
     let top=r.bottom+gap;
-    if(top+menuRect.height>window.innerHeight-8 && r.top-menuRect.height-gap>=8){
-      top=r.top-menuRect.height-gap;
-    }
-    portal.style.left=Math.round(left)+"px";
-    portal.style.top=Math.round(top)+"px";
+    if(top+menuRect.height>window.innerHeight-8) top=r.top-menuRect.height-gap;
+    top=Math.max(8,Math.min(top,window.innerHeight-menuRect.height-8));
+    portal.style.left=Math.round(left)+'px';
+    portal.style.top=Math.round(top)+'px';
 
-    portal.addEventListener("click", event=>{
-      const button=event.target.closest("button");
-      if(!button) return;
+    portal.addEventListener('pointerdown',e=>e.stopPropagation(),true);
+    portal.querySelectorAll('button').forEach(button=>{
+      button.addEventListener('pointerup',event=>{
+        event.preventDefault();
+        event.stopPropagation();
+        runPortalAction(button);
+      },true);
+      button.addEventListener('click',event=>{
+        event.preventDefault();
+        event.stopPropagation();
+      },true);
+    });
+    portal.addEventListener('click',event=>{
       event.preventDefault();
       event.stopPropagation();
-      runPortalAction(button);
-    });
+    },true);
   }
 
-  document.addEventListener("pointerdown", event=>{
-    const trigger=event.target.closest?.(".action-menu-trigger");
+  // Capture phase prevents the native <summary>/<details> behavior entirely.
+  document.addEventListener('pointerdown',event=>{
+    const trigger=event.target?.closest?.('.action-menu-trigger');
     if(trigger){
       event.preventDefault();
       event.stopPropagation();
-      openPortal(trigger.closest("details"));
-      return;
+      openPortal(trigger.closest('details'));
     }
-    if(portal && !portal.contains(event.target)){
-      event.preventDefault();
-      event.stopPropagation();
-      closePortal();
-    }
-  }, true);
-
-  document.addEventListener("click", event=>{
-    if(event.target.closest?.(".action-menu-trigger")){
+  },true);
+  document.addEventListener('click',event=>{
+    if(event.target?.closest?.('.action-menu-trigger')){
       event.preventDefault();
       event.stopPropagation();
     }
-  }, true);
+  },true);
 
-  window.addEventListener("resize",()=>{ if(sourceMenu && portal) openPortal(sourceMenu); });
-  window.addEventListener("scroll",()=>{ if(sourceMenu && portal) openPortal(sourceMenu); }, true);
+  window.addEventListener('resize',()=>{ if(sourceMenu && portal) openPortal(sourceMenu); });
+  window.addEventListener('scroll',()=>{ if(sourceMenu && portal) openPortal(sourceMenu); },true);
 })();
 
 document.querySelectorAll("[data-library-tab]").forEach(b=>b.addEventListener("click",()=>setLibraryTab(b.dataset.libraryTab)));
