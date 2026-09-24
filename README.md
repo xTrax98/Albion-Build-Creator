@@ -1,1 +1,1 @@
-Albion Build Creator 0.3.87 TEST
+Albion Build Creator 0.3.88 - TEST

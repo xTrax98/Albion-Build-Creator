@@ -9,7 +9,7 @@ const state = {
 
 const I18N = {
   es: {
-    title:"xTrux", subtitle:"Creador de builds para Albion Online",
+    title:"Creador de builds por xTrux", subtitle:"Creador de builds para Albion Online",
     buildNamePlaceholder:"Nombre de la build", bag:"Bolsa", head:"Cabeza", cape:"Capa",
     weapon:"Arma", armor:"Pecho", offhand:"Secundaria", potion:"Poción", shoes:"Botas", food:"Comida",
     selectWeapon:"Seleccionar objeto", selectorHelp:"Busca por nombre o filtra por categoría.", offhandCompatibility:"Con un arma de una mano puedes elegir cualquier secundaria válida.",
@@ -27,7 +27,7 @@ const I18N = {
     noResults:"No se han encontrado objetos.", selected:"Seleccionado: ", twoHanded:"Arma a dos manos", offhandNeedsWeapon:"Selecciona primero un arma de una mano.", offhandLocked:"La secundaria no está disponible con esta arma."
   },
   en: {
-    title:"xTrux", subtitle:"Albion Online build creator",
+    title:"Build Creator by xTrux", subtitle:"Albion Online build creator",
     buildNamePlaceholder:"Build name", bag:"Bag", head:"Head", cape:"Cape",
     weapon:"Weapon", armor:"Armor", offhand:"Off-hand", potion:"Potion", shoes:"Shoes", food:"Food",
     selectWeapon:"Select item", selectorHelp:"Search by name or filter by category.", offhandCompatibility:"With a one-handed weapon you can choose any valid off-hand.",
