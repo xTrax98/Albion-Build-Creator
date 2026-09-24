@@ -1,3 +1,3 @@
-# Albion Build Creator 0.3.97 TEST
+# Albion Build Creator 0.3.98 TEST
 
-TEST version. Action menus now render in a body-level portal so they remain above all library cards and stacking/overflow contexts.
+Cache-busting for app.js and styles.css using version query parameters. This does not clear or modify localStorage.
