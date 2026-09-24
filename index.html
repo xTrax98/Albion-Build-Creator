@@ -4,10 +4,59 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Creador de builds por xTrux</title>
-  <link rel="stylesheet" href="styles.css?v=0.3.111">
+  <link rel="stylesheet" href="styles.css?v=0.3.119">
 </head>
 <body>
-  <main class="app">
+  <section id="fakeLogin" class="fake-login" aria-label="Inicio de sesión">
+    <div class="fake-login-card">
+      <div class="fake-login-logo"><img src="guild-logo.png" alt="Butaneros Avalonicos"></div>
+      <div class="guild-name">BUTANEROS AVALONICOS</div>
+      <h1>Iniciar sesión</h1>
+      <p class="fake-login-subtitle">Accede al Creador de Builds</p>
+      <form id="fakeLoginForm" autocomplete="off">
+        <label>Usuario
+          <input id="fakeUser" type="text" value="FinoTroll" placeholder="Tu usuario" autocomplete="off">
+        </label>
+        <label>Contraseña
+          <div class="password-field">
+            <input id="fakePassword" type="password" value="DarktanLaChupa" placeholder="Tu contraseña" autocomplete="off">
+            <button type="button" id="toggleFakePassword" class="password-eye" aria-label="Mostrar contraseña" title="Mostrar contraseña">👁️</button>
+          </div>
+        </label>
+        <button type="submit" class="primary fake-login-button">Iniciar sesión</button>
+        <button type="button" id="registerButton" class="ghost register-button">📝 Registrarse</button>
+      </form>
+      <div class="fake-login-joke">🔐 Seguridad de Butaneros: <strong>absolutamente ninguna</strong></div>
+    </div>
+  </section>
+
+  <div id="premiumTroll" class="premium-troll" hidden aria-hidden="true">
+    <div class="premium-troll-backdrop"></div>
+    <div class="premium-troll-card">
+      <button type="button" id="premiumTrollClose" class="premium-troll-close" aria-label="Cerrar">×</button>
+      <img src="premium-troll.png" alt="Premium desbloqueado" class="premium-troll-image">
+      <div class="premium-troll-caption">💎 PREMIUM DESBLOQUEADO 💎</div>
+      <div class="premium-troll-thanks">Gracias por perder 20 segundos de tu tiempo (=</div>
+      <div class="premium-troll-video" id="premiumTrollVideo"></div>
+      <audio id="premiumTrollAudio" src="rickroll.mp3" preload="auto"></audio>
+    </div>
+  </div>
+
+  <div id="premiumModal" class="premium-modal" hidden>
+    <div class="premium-modal-backdrop" data-premium-close></div>
+    <div class="premium-modal-card" role="dialog" aria-modal="true" aria-labelledby="premiumModalTitle">
+      <div class="premium-modal-badge">💎 PREMIUM</div>
+      <h2 id="premiumModalTitle">¿Quieres comprar Premium?</h2>
+      <p id="premiumModalText">Puedes decir que sí. Nadie se enterará.</p>
+      <div class="premium-modal-actions">
+        <button type="button" id="premiumNo" class="ghost">No</button>
+        <button type="button" id="premiumYes" class="primary">Sí</button>
+      </div>
+      <div class="premium-progress" id="premiumProgress">Oferta Premium totalmente legítima™</div>
+    </div>
+  </div>
+
+  <main class="app" id="mainApp" hidden>
     <header class="topbar">
       <div class="brand-block">
         <div class="guild-mark" aria-label="Butaneros Avalonicos"><img src="guild-logo.png" alt="Butaneros Avalonicos"></div>
@@ -17,9 +66,12 @@
         <p data-i18n="subtitle">Creador de builds para Albion Online</p>
         </div>
       </div>
-      <div class="language">
+      <div class="topbar-actions">
+        <button type="button" id="premiumButton" class="premium-top-button">💎 Premium</button>
+        <div class="language">
         <button class="lang active" data-lang="es" type="button">🇪🇸 ES</button>
         <button class="lang" data-lang="en" type="button">🇬🇧 EN</button>
+        </div>
       </div>
     </header>
 
@@ -156,6 +208,6 @@
     </div>
   </main>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>
-  <script src="app.js?v=0.3.105"></script>
+  <script src="app.js?v=0.3.112"></script>
 </body>
 </html>

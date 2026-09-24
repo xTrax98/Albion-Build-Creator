@@ -1,3 +1,1 @@
-Albion Build Creator TEST 0.3.111
-
-Discord composition images now use two columns whenever there are more than 10 players.
+TEST 0.3.119 - Añade el mensaje meme al troll Premium: "Gracias por perder 20 segundos de tu tiempo (=".

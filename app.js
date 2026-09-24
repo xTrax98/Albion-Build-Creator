@@ -57,6 +57,110 @@ const SLOT_LABELS = {
 
 const $ = (s) => document.querySelector(s);
 
+// Meme login: intentionally does not authenticate or store credentials.
+const premiumButton = $("#premiumButton");
+const premiumModal = $("#premiumModal");
+const premiumNo = $("#premiumNo");
+const premiumYes = $("#premiumYes");
+const premiumModalTitle = $("#premiumModalTitle");
+const premiumModalText = $("#premiumModalText");
+const premiumProgress = $("#premiumProgress");
+const premiumTroll = $("#premiumTroll");
+const premiumTrollVideo = $("#premiumTrollVideo");
+const premiumTrollAudio = $("#premiumTrollAudio");
+const premiumTrollClose = $("#premiumTrollClose");
+
+const PREMIUM_STEPS = [
+  ["¿Quieres comprarte el Premium?", "Una decisión importante. Piénsalo bien...", "Pregunta 1 de 3"],
+  ["¿Estás seguro?", "Pero seguro, seguro de verdad. Puedes echarte atrás ahora.", "Pregunta 2 de 3"],
+  ["¿100% no?", "Última oportunidad para conservar tu dignidad. 😌", "Pregunta 3 de 3"]
+];
+let premiumStep = 0;
+
+function openPremiumMeme(){
+  premiumStep = 0;
+  renderPremiumMeme();
+  if(premiumModal) premiumModal.hidden = false;
+}
+function renderPremiumMeme(){
+  const step = PREMIUM_STEPS[premiumStep];
+  if(premiumModalTitle) premiumModalTitle.textContent = step[0];
+  if(premiumModalText) premiumModalText.textContent = step[1];
+  if(premiumProgress) premiumProgress.textContent = `${step[2]} · Premium 100% oficial™`;
+  if(premiumNo) premiumNo.textContent = "No";
+  if(premiumYes) premiumYes.textContent = "Sí";
+}
+function finishPremiumMeme(){
+  if(premiumModal) premiumModal.hidden = true;
+  if(!premiumTroll || !premiumTrollVideo) return;
+  premiumTroll.hidden = false;
+  premiumTroll.setAttribute("aria-hidden", "false");
+  premiumTrollVideo.innerHTML = `<div class="premium-audio-message">🎵 Premium activado. Preparando experiencia exclusiva...</div>`;
+  if(premiumTrollAudio){
+    premiumTrollAudio.currentTime = 0;
+    const playPromise = premiumTrollAudio.play();
+    if(playPromise && typeof playPromise.catch === "function") playPromise.catch(()=>{});
+  }
+}
+function closePremiumTroll(){
+  if(premiumTroll) { premiumTroll.hidden = true; premiumTroll.setAttribute("aria-hidden", "true"); }
+  if(premiumTrollVideo) premiumTrollVideo.innerHTML = "";
+  if(premiumTrollAudio){ premiumTrollAudio.pause(); premiumTrollAudio.currentTime = 0; }
+}
+
+if(premiumButton) premiumButton.addEventListener("click", openPremiumMeme);
+if(premiumNo) premiumNo.addEventListener("click", ()=>{
+  if(premiumModal) premiumModal.hidden = true;
+});
+if(premiumYes) premiumYes.addEventListener("click", ()=>{
+  if(premiumStep >= PREMIUM_STEPS.length - 1){
+    finishPremiumMeme();
+    return;
+  }
+  premiumStep++;
+  renderPremiumMeme();
+});
+document.querySelectorAll("[data-premium-close]").forEach(el=>el.addEventListener("click", ()=>{ if(premiumModal) premiumModal.hidden=true; }));
+if(premiumTrollClose) premiumTrollClose.addEventListener("click", closePremiumTroll);
+if(premiumTroll) premiumTroll.querySelector(".premium-troll-backdrop")?.addEventListener("click", closePremiumTroll);
+
+const fakeLogin = $("#fakeLogin");
+const mainApp = $("#mainApp");
+const fakeLoginForm = $("#fakeLoginForm");
+const registerButton = $("#registerButton");
+const toggleFakePassword = $("#toggleFakePassword");
+if(toggleFakePassword){
+  toggleFakePassword.addEventListener("click", ()=>{
+    const password = $("#fakePassword");
+    if(!password) return;
+    const visible = password.type === "text";
+    password.type = visible ? "password" : "text";
+    toggleFakePassword.textContent = visible ? "👁️" : "🙈";
+    toggleFakePassword.setAttribute("aria-label", visible ? "Mostrar contraseña" : "Ocultar contraseña");
+    toggleFakePassword.title = visible ? "Mostrar contraseña" : "Ocultar contraseña";
+  });
+}
+if(registerButton){
+  registerButton.addEventListener("click", ()=>{
+    const user = $("#fakeUser");
+    const password = $("#fakePassword");
+    if(user) user.value = "Butaneros2026";
+    if(password) password.value = "Butaneros2026";
+    registerButton.textContent = "✅ Registrado (bueno... más o menos)";
+    setTimeout(()=>{ registerButton.textContent = "📝 Registrarse"; }, 1800);
+  });
+}
+if(fakeLoginForm && fakeLogin && mainApp){
+  fakeLoginForm.addEventListener("submit", (event)=>{
+    event.preventDefault();
+    fakeLogin.classList.add("fake-login-exit");
+    setTimeout(()=>{
+      fakeLogin.hidden = true;
+      mainApp.hidden = false;
+    }, 220);
+  });
+}
+
 function t(key){ return I18N[state.lang][key] ?? key; }
 function getPresets(){
   try{ return JSON.parse(localStorage.getItem(PRESETS_KEY) || "[]"); }catch{ return []; }
