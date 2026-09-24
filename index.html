@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Albion Build Creator</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand-block">
+        <div class="guild-mark" aria-label="Butaneros Avalonicos"><img src="guild-logo.png" alt="Butaneros Avalonicos"></div>
+        <div>
+        <div class="guild-name">BUTANEROS AVALONICOS</div>
+        <h1 data-i18n="title">Albion Build Creator</h1>
+        <p data-i18n="subtitle">Creador de builds para Albion Online</p>
+        </div>
+      </div>
+      <div class="language">
+        <button class="lang active" data-lang="es" type="button">🇪🇸 ES</button>
+        <button class="lang" data-lang="en" type="button">🇬🇧 EN</button>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <aside class="sidebar presets-panel" id="presetsPanel">
+        <div class="library-head">
+          <h2 data-i18n="library">Biblioteca</h2>
+          <p data-i18n="libraryHelp">Organiza tus builds y composiciones.</p>
+        </div>
+        <nav class="library-menu" aria-label="Biblioteca">
+          <button class="library-tab active" data-library-tab="presets" type="button">
+            <span class="library-tab-title" data-i18n="myPresets">Mis presets</span>
+            <span class="library-tab-count" id="presetCount">0</span>
+          </button>
+          <button class="library-tab" data-library-tab="compositions" type="button">
+            <span class="library-tab-title" data-i18n="myCompositions">Mis composiciones</span>
+            <span class="library-tab-count" id="compositionCount">0</span>
+          </button>
+          <button class="library-tab" data-library-tab="zvz" type="button">
+            <span class="library-tab-title" data-i18n="myZvZCompositions">Mis composiciones ZvZ</span>
+            <span class="library-tab-count" id="zvzCount">0</span>
+          </button>
+        </nav>
+        <div class="backup-actions">
+          <button id="exportAll" class="ghost" type="button" data-i18n="exportAll">Exportar todo</button>
+          <button id="importAll" class="ghost" type="button" data-i18n="importAll">Importar todo</button>
+          <input id="importFile" type="file" accept="application/json,.json" hidden>
+        </div>
+        <div id="presetsList" class="library-content"></div>
+        <div id="compositionsPanel" class="library-content hidden">
+          <div id="compositionList"></div>
+          <button id="newComposition" class="primary library-new" type="button" data-i18n="newComposition">Nueva composición</button>
+        </div>
+        <div id="zvzPanel" class="library-content hidden">
+          <div id="zvzList"></div>
+          <button id="newZvZComposition" class="primary library-new" type="button" data-i18n="newZvZComposition">Nueva composición ZvZ</button>
+        </div>
+      </aside>
+
+      <section class="build-panel">
+        <div id="buildCreatorView">
+        <div class="build-name-row">
+          <input id="buildName" maxlength="80" data-i18n-placeholder="buildNamePlaceholder"
+                 placeholder="Nombre de la build">
+        </div>
+
+        <div class="equipment-grid">
+          <button class="slot" data-slot="bag" type="button"><span class="slot-label" data-i18n="bag">Bolsa</span><span class="slot-item"></span></button>
+          <button class="slot" data-slot="head" type="button"><span class="slot-label" data-i18n="head">Cabeza</span><span class="slot-item"></span></button>
+          <button class="slot" data-slot="cape" type="button"><span class="slot-label" data-i18n="cape">Capa</span><span class="slot-item"></span></button>
+          <button class="slot selected" data-slot="mainhand" type="button"><span class="slot-label" data-i18n="weapon">Arma</span><span class="slot-item"></span></button>
+          <button class="slot" data-slot="armor" type="button"><span class="slot-label" data-i18n="armor">Pecho</span><span class="slot-item"></span></button>
+          <button class="slot" data-slot="offhand" type="button"><span class="slot-label" data-i18n="offhand">Secundaria</span><span class="slot-item"></span></button>
+          <button class="slot" data-slot="potion" type="button"><span class="slot-label" data-i18n="potion">Poción</span><span class="slot-item"></span></button>
+          <button class="slot" data-slot="shoes" type="button"><span class="slot-label" data-i18n="shoes">Botas</span><span class="slot-item"></span></button>
+          <button class="slot" data-slot="food" type="button"><span class="slot-label" data-i18n="food">Comida</span><span class="slot-item"></span></button>
+        </div>
+
+        <div class="status" id="status" aria-live="polite"></div>
+        <div class="build-actions">
+          <button id="savePreset" class="primary" type="button" data-i18n="savePreset">Guardar como preset</button>
+          <button id="newBuild" class="ghost" type="button" data-i18n="newBuild">Nueva build</button>
+        </div>
+
+        </div>
+        <section id="compositionPreview" class="composition-preview hidden" aria-live="polite"></section>
+      </section>
+
+      <aside class="sidebar right-sidebar">
+        <section class="selector" id="selector">
+          <div class="selector-head">
+            <div>
+              <h2 data-i18n="selectWeapon">Seleccionar objeto</h2>
+              <p data-i18n="selectorHelp">Busca por nombre o filtra por categoría.</p>
+            </div>
+            <button id="closeSelector" class="ghost" type="button" data-i18n="close">Cerrar</button>
+          </div>
+
+          <div class="filters">
+            <input id="search" autocomplete="off" data-i18n-placeholder="searchPlaceholder" placeholder="Buscar objeto...">
+            <select id="category">
+              <option value="" data-i18n="allCategories">Todas las categorías</option>
+            </select>
+          </div>
+
+          <div id="results" class="results"></div>
+          <div id="loading" class="loading" data-i18n="loading">Cargando objetos...</div>
+        </section>
+
+        <section class="item-editor hidden" id="itemEditor">
+          <div class="editor-head">
+            <div id="editorItem"></div>
+            <button id="cancelEditor" class="ghost" type="button" data-i18n="cancel">Cancelar</button>
+          </div>
+
+          <div class="editor-note" id="editorNote"></div>
+          <div class="editor-controls">
+            <label><span data-i18n="tier">Tier</span><select id="tier"></select></label>
+            <label><span data-i18n="enchantment">Encantamiento</span><select id="enchant"></select></label>
+            <label><span data-i18n="quality">Calidad</span><select id="quality"></select></label>
+          </div>
+
+          <button id="addItem" class="primary" type="button" data-i18n="add">Añadir al build</button>
+        </section>
+      </aside>
+    </div>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,900 @@
+:root{
+  --bg:#101216; --panel:#181b21; --panel2:#20242c; --border:#353b46;
+  --text:#f2f4f7; --muted:#9da5b1; --accent:#d5a94b; --accent2:#2a2f38;
+}
+*{box-sizing:border-box}
+html{min-height:100%;background:#0c0e12} body{margin:0;min-height:100vh;background:linear-gradient(145deg,#0c0e12,#151922) fixed;background-size:cover;color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.app{width:min(100%,1400px);margin:0 auto;padding:28px 20px 60px}
+.topbar{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin-bottom:24px}
+h1,h2,p{margin:0}
+h1{font-size:28px;letter-spacing:-.02em}
+.topbar p{color:var(--muted);margin-top:5px}
+.language{display:flex;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:3px}
+.lang{border:0;background:transparent;color:var(--muted);padding:8px 11px;border-radius:7px}
+.lang.active{background:var(--accent);color:#17130a;font-weight:700}
+.build-panel,.selector,.item-editor{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px}
+.build-name-row{margin-bottom:18px}
+#buildName,.filters input,.filters select,.editor-controls select{
+  width:100%;background:#0e1014;color:var(--text);border:1px solid var(--border);
+  border-radius:10px;padding:12px 13px;outline:none
+}
+#buildName:focus,.filters input:focus,.filters select:focus,.editor-controls select:focus{border-color:var(--accent)}
+.equipment-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.slot{
+  min-height:145px;background:var(--panel2);border:1px solid var(--border);border-radius:12px;
+  color:var(--text);padding:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+  transition:.15s
+}
+.slot:hover,.slot.selected{border-color:var(--accent);transform:translateY(-1px)}
+.slot-label{text-transform:uppercase;font-size:12px;color:var(--muted);letter-spacing:.08em}
+.slot-item{min-height:84px;display:flex;align-items:center;justify-content:center;text-align:center}
+.slot-item img{width:78px;height:78px;object-fit:contain;image-rendering:auto}
+.slot-name{font-size:12px;color:var(--text);max-width:130px}
+.status{min-height:22px;color:var(--muted);font-size:13px;margin-top:12px}
+.selector{margin-top:18px}
+.selector-head,.editor-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:14px}
+.selector h2{font-size:19px}
+.selector p{color:var(--muted);font-size:13px;margin-top:4px}
+.ghost{background:transparent;border:1px solid var(--border);color:var(--text);border-radius:9px;padding:9px 12px}
+.filters{display:grid;grid-template-columns:1fr 260px;gap:10px;margin-bottom:14px}
+.results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:430px;overflow:auto}
+.result{
+  display:flex;align-items:center;gap:12px;text-align:left;background:#111419;border:1px solid var(--border);
+  border-radius:10px;padding:9px;color:var(--text)
+}
+.result:hover{border-color:var(--accent)}
+.result img{width:56px;height:56px;object-fit:contain;flex:none}
+.result strong{display:block;font-size:14px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.result small{display:none}
+.loading{color:var(--muted);padding:16px 0}
+.hidden{display:none}
+.item-editor{margin-top:18px}
+#editorItem{display:flex;align-items:center;gap:12px}
+#editorItem img{width:72px;height:72px;object-fit:contain}
+.editor-controls{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0}
+.editor-controls label span{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}
+.primary{width:100%;background:var(--accent);border:0;color:#17130a;font-weight:800;border-radius:10px;padding:13px}
+@media(max-width:680px){
+  .equipment-grid{gap:7px}.slot{min-height:120px}.slot-item img{width:64px;height:64px}
+  .filters,.editor-controls{grid-template-columns:1fr}.results{grid-template-columns:1fr}
+  .topbar{align-items:stretch;flex-direction:column}
+}
+
+.slot.locked{cursor:default;border-color:var(--border);transform:none}
+.slot.locked:hover{border-color:var(--border);transform:none}
+.slot-lock{font-size:10px;color:var(--muted);margin-top:4px}
+
+.build-actions{display:flex;gap:10px;margin-top:12px}.build-actions .primary{width:auto;flex:1}.build-actions .ghost{padding:13px 16px}
+.presets-panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px;margin-top:18px}.presets-head{margin-bottom:14px}.presets-panel h2{font-size:19px}.presets-panel p{color:var(--muted);font-size:13px;margin-top:4px}.presets-list{display:grid;gap:8px}.preset-card{display:flex;justify-content:space-between;align-items:center;gap:12px;background:#111419;border:1px solid var(--border);border-radius:10px;padding:10px 12px}.preset-card strong{display:block}.preset-card small{display:block;color:var(--muted);margin-top:3px}.preset-actions{display:flex;gap:7px}.danger{color:#ffb1b1}.danger:hover{border-color:#b85a5a}
+@media(max-width:680px){.build-actions{flex-direction:column}.build-actions .primary{width:100%}.preset-card{align-items:stretch;flex-direction:column}.preset-actions{display:grid;grid-template-columns:1fr 1fr}.preset-actions button{width:100%}}
+
+
+/* Desktop three-column workspace: presets | build | object selector */
+.workspace{
+  display:grid;
+  grid-template-columns:minmax(280px,310px) minmax(500px,1fr) minmax(380px,430px);
+  gap:18px;
+  align-items:start;
+}
+.workspace > .build-panel,.workspace > .sidebar{min-width:0}
+.workspace .presets-panel{margin-top:0}
+.right-sidebar{min-width:0}
+.right-sidebar .selector,.right-sidebar .item-editor{margin-top:0}
+.right-sidebar .item-editor{margin-top:12px}
+.presets-panel{position:sticky;top:18px}
+.right-sidebar{position:sticky;top:18px}
+.presets-list{max-height:calc(100vh - 170px);overflow:auto}
+.results{grid-template-columns:1fr;max-height:520px}
+.result{min-width:0}
+.result strong{overflow-wrap:anywhere}
+@media(max-width:1050px){
+  .app{width:min(100%,1400px)}
+  .workspace{grid-template-columns:minmax(250px,280px) minmax(480px,1fr) minmax(340px,390px);gap:14px}
+}
+@media(max-width:850px){
+  .workspace{grid-template-columns:1fr 1.6fr;grid-template-areas:"build build" "presets selector"}
+  .workspace > .build-panel{grid-area:build}
+  .workspace > .presets-panel{grid-area:presets}
+  .workspace > .right-sidebar{grid-area:selector}
+  .presets-panel,.right-sidebar{position:static}
+  .presets-list{max-height:500px}
+}
+@media(max-width:680px){
+  .workspace{display:flex;flex-direction:column}
+  .workspace > .build-panel{order:1;width:100%}
+  .workspace > .right-sidebar{order:2;width:100%}
+  .workspace > .presets-panel{order:3;width:100%}
+  .right-sidebar .selector,.right-sidebar .item-editor{width:100%}
+}
+
+/* 0.3.4: wider desktop workspace + library navigation */
+.app{width:min(100%,1680px)}
+.workspace{grid-template-columns:minmax(320px,350px) minmax(600px,1fr) minmax(520px,560px);gap:18px}
+.library-head{margin-bottom:16px}
+.library-head h2{font-size:19px}
+.library-head p{color:var(--muted);font-size:13px;margin-top:4px}
+.library-menu{display:grid;gap:7px;margin-bottom:14px}
+.library-tab{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;background:transparent;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:12px 13px;text-align:left}
+.library-tab:hover{border-color:var(--accent)}
+.library-tab.active{background:var(--panel2);border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
+.library-tab-title{font-weight:700}
+.library-tab-count{min-width:24px;height:24px;padding:3px 7px;border-radius:999px;background:#111419;color:var(--muted);font-size:12px;text-align:center}
+.library-tab.active .library-tab-count{color:var(--text)}
+.library-content{min-width:0}
+.library-empty{padding:18px 8px;color:var(--muted);text-align:center;border:1px dashed var(--border);border-radius:10px}
+.library-empty strong{display:block;color:var(--text);font-size:13px}
+.library-empty p{margin-top:6px;font-size:12px;line-height:1.45}
+.library-empty-icon{width:34px;height:34px;display:grid;place-items:center;margin:0 auto 9px;border-radius:9px;background:var(--panel2);color:var(--accent);font-size:22px}
+.presets-panel{padding:18px}
+.right-sidebar .selector{padding:20px}
+.results{grid-template-columns:repeat(2,minmax(0,1fr));max-height:620px;gap:10px}
+.result{padding:10px 12px;min-height:78px;overflow:hidden}
+.result img{width:64px;height:64px}
+@media(max-width:1500px){
+  .app{width:min(100%,1500px)}
+  .workspace{grid-template-columns:minmax(290px,320px) minmax(540px,1fr) minmax(460px,500px);gap:16px}
+}
+@media(max-width:1050px){
+  .app{width:min(100%,1400px)}
+  .workspace{grid-template-columns:minmax(250px,280px) minmax(480px,1fr) minmax(340px,390px);gap:14px}
+  .results{grid-template-columns:1fr}
+}
+
+
+/* 0.3.13: clearer item configuration panel */
+.item-editor{padding:22px}
+.editor-head{align-items:center}
+#editorItem{flex:1;min-width:0}
+#editorItem img{width:88px;height:88px;flex:none}
+.editor-item-copy{display:flex;flex-direction:column;gap:4px;min-width:0}
+.editor-item-copy strong{font-size:18px;line-height:1.25}
+.editor-item-copy small{color:var(--muted);font-size:12px}
+.editor-slot-label{color:var(--accent);font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.editor-note{background:#111419;border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--muted);font-size:12px;margin:12px 0 14px}
+.editor-controls label select:disabled{opacity:.48;cursor:not-allowed}
+.editor-controls label:has(select:disabled) span{opacity:.55}
+#addItem{margin-top:2px}
+@media(max-width:680px){#editorItem img{width:72px;height:72px}.editor-item-copy strong{font-size:16px}}
+
+/* 0.3.14: composition builder */
+.library-new{margin-top:10px}
+.composition-card{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#111419;border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px}
+.composition-card strong{display:block}.composition-card small{display:block;color:var(--muted);margin-top:3px}
+.composition-editor{display:grid;gap:10px}
+.composition-name{width:100%;background:#0e1014;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:11px 12px;outline:none}
+.composition-name:focus{border-color:var(--accent)}
+.composition-members{display:grid;gap:7px;max-height:420px;overflow:auto}
+.composition-member{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#111419;border:1px solid var(--border);border-radius:9px;padding:9px 10px}
+.composition-member strong{display:block;font-size:13px}.composition-member small{display:block;color:var(--muted);font-size:11px;margin-top:3px}
+.composition-add-row{display:grid;grid-template-columns:1fr 1fr 1.25fr;gap:7px}
+.composition-add-row input,.composition-add-row select{min-width:0;background:#0e1014;color:var(--text);border:1px solid var(--border);border-radius:9px;padding:9px 10px;outline:none}
+.composition-add-row button{grid-column:1/-1}
+.composition-actions{display:flex;gap:7px}.composition-actions .primary{flex:1}.composition-actions .ghost{width:auto}
+.library-empty.compact{padding:12px;font-size:12px}
+@media(max-width:680px){.composition-add-row{grid-template-columns:1fr}.composition-add-row button{grid-column:auto}.composition-card{align-items:stretch;flex-direction:column}.composition-actions{flex-direction:column}}
+
+
+/* 0.3.15: composition preview */
+.composition-preview{min-height:100%;}
+.composition-preview-head{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.composition-preview-head h2{font-size:22px;margin-top:3px}
+.composition-preview-head p{color:var(--muted);font-size:13px;margin-top:4px}
+.preview-kicker{font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--accent);font-weight:800}
+.composition-builds{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.composition-build-card{background:#111419;border:1px solid var(--border);border-radius:12px;padding:12px;min-width:0}
+.composition-build-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.composition-avatar{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;background:var(--panel2);color:var(--accent);font-weight:800;flex:none}
+.composition-build-info{min-width:0}
+.composition-build-info strong,.composition-build-info span,.composition-build-info small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.composition-build-info strong{font-size:14px}
+.composition-build-info span{font-size:12px;color:var(--accent);margin-top:2px}
+.composition-build-info small{font-size:11px;color:var(--muted);margin-top:2px}
+.composition-build-grid{display:grid;grid-template-columns:repeat(9,1fr);gap:4px}
+.composition-icon{aspect-ratio:1;background:#20242c;border:1px solid var(--border);border-radius:5px;display:grid;place-items:center;overflow:hidden;min-width:0}
+.composition-icon img{width:100%;height:100%;object-fit:contain}
+.composition-icon.empty{color:#59616e;font-size:13px}
+@media(max-width:1200px){.composition-builds{grid-template-columns:1fr}.composition-build-grid{grid-template-columns:repeat(9,minmax(24px,1fr))}}
+@media(max-width:680px){.composition-preview-head{align-items:stretch;flex-direction:column}.composition-build-grid{gap:3px}}
+
+/* 0.3.17: composition preview replaces the creator view */
+.build-panel > .hidden { display:none !important; }
+.build-panel > .composition-preview { width:100%; }
+
+
+/* 0.3.18: full-width composition preview */
+.workspace.preview-mode{grid-template-columns:minmax(320px,350px) 600px;gap:18px;align-items:start}
+.workspace.preview-mode > .build-panel{grid-column:2;width:600px;max-width:600px}
+.workspace.preview-mode > .right-sidebar{display:none}
+.workspace.preview-mode .composition-preview{width:100%}
+.workspace.preview-mode .composition-builds{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.workspace.preview-mode .composition-build-card{padding:18px}
+.workspace.preview-mode .composition-build-header{margin-bottom:14px}
+.workspace.preview-mode .composition-avatar{width:42px;height:42px;font-size:16px}
+.workspace.preview-mode .composition-build-info strong{font-size:17px}
+.workspace.preview-mode .composition-build-info span{font-size:13px}
+.workspace.preview-mode .composition-build-info small{font-size:12px}
+.workspace.preview-mode .composition-build-grid{gap:7px}
+.workspace.preview-mode .composition-icon{border-radius:7px;min-width:42px}
+.workspace.preview-mode .composition-icon.empty{font-size:16px}
+@media(max-width:1050px){.workspace.preview-mode{grid-template-columns:minmax(250px,280px) minmax(0,600px)}.workspace.preview-mode > .build-panel{width:100%;max-width:600px}.workspace.preview-mode .composition-builds{grid-template-columns:1fr}}
+@media(max-width:680px){.workspace.preview-mode{display:flex;flex-direction:column}.workspace.preview-mode > .build-panel{width:100%;max-width:none}.workspace.preview-mode .composition-builds{grid-template-columns:1fr}}
+
+
+/* 0.3.19: composition equipment order + compact single-row builds */
+.workspace.preview-mode .composition-build-card{padding:12px 14px}
+.workspace.preview-mode .composition-build-header{margin-bottom:8px}
+.workspace.preview-mode .composition-build-grid{display:flex;flex-wrap:nowrap;gap:5px;width:100%;align-items:center;overflow:hidden}
+.workspace.preview-mode .composition-icon{width:clamp(34px,4vw,58px);height:clamp(34px,4vw,58px);aspect-ratio:1;flex:0 0 auto;border-radius:6px}
+.workspace.preview-mode .composition-build-info strong{font-size:15px}
+.workspace.preview-mode .composition-build-info span{font-size:12px}
+.workspace.preview-mode .composition-build-info small{font-size:11px}
+@media(max-width:1050px){
+  .workspace.preview-mode .composition-builds{grid-template-columns:1fr}
+  .workspace.preview-mode .composition-icon{width:48px;height:48px}
+}
+@media(max-width:680px){
+  .workspace.preview-mode .composition-icon{width:38px;height:38px}
+}
+
+/* 0.3.20: compact composition rows - player info and equipment in one line */
+.workspace.preview-mode .composition-build-card{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:10px 12px;
+  min-height:74px;
+}
+.workspace.preview-mode .composition-build-header{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  flex:0 0 180px;
+  min-width:0;
+  margin:0;
+}
+.workspace.preview-mode .composition-avatar{
+  width:34px;
+  height:34px;
+  font-size:13px;
+  border-radius:8px;
+}
+.workspace.preview-mode .composition-build-info strong{font-size:14px}
+.workspace.preview-mode .composition-build-info span{font-size:11px}
+.workspace.preview-mode .composition-build-info small{font-size:10px}
+.workspace.preview-mode .composition-build-grid{
+  flex:1 1 auto;
+  min-width:0;
+  display:flex;
+  flex-wrap:nowrap;
+  gap:5px;
+  align-items:center;
+  overflow:hidden;
+  width:auto;
+}
+.workspace.preview-mode .composition-icon{
+  width:clamp(38px,4.2vw,54px);
+  height:clamp(38px,4.2vw,54px);
+  flex:0 0 auto;
+}
+@media(max-width:1050px){
+  .workspace.preview-mode .composition-build-header{flex-basis:155px}
+  .workspace.preview-mode .composition-icon{width:44px;height:44px}
+}
+@media(max-width:760px){
+  .workspace.preview-mode .composition-build-card{display:block;padding:10px}
+  .workspace.preview-mode .composition-build-header{margin-bottom:8px}
+  .workspace.preview-mode .composition-build-grid{overflow-x:auto}
+  .workspace.preview-mode .composition-icon{width:42px;height:42px}
+}
+
+
+/* 0.3.21: one player per row in composition preview */
+.workspace.preview-mode .composition-builds{grid-template-columns:1fr;gap:8px}
+.workspace.preview-mode .composition-build-card{display:flex;align-items:center;gap:16px;padding:8px 12px;min-height:72px}
+.workspace.preview-mode .composition-build-header{margin:0;flex:0 0 190px;min-width:190px}
+.workspace.preview-mode .composition-build-grid{flex:1;min-width:0;gap:6px;justify-content:flex-start}
+.workspace.preview-mode .composition-icon{width:52px;height:52px}
+@media(max-width:1050px){
+  .workspace.preview-mode .composition-build-card{gap:10px}
+  .workspace.preview-mode .composition-build-header{flex-basis:160px;min-width:160px}
+  .workspace.preview-mode .composition-icon{width:46px;height:46px}
+}
+@media(max-width:680px){
+  .workspace.preview-mode .composition-build-card{align-items:flex-start;flex-direction:column;gap:7px}
+  .workspace.preview-mode .composition-build-header{flex-basis:auto;min-width:0;width:100%}
+  .workspace.preview-mode .composition-build-grid{width:100%}
+  .workspace.preview-mode .composition-icon{width:40px;height:40px}
+}
+
+
+/* 0.3.21: one player per row in composition preview */
+.workspace.preview-mode .composition-builds{grid-template-columns:1fr;gap:8px}
+.workspace.preview-mode .composition-build-card{display:flex;align-items:center;gap:16px;padding:8px 12px;min-height:72px}
+.workspace.preview-mode .composition-build-header{margin:0;flex:0 0 190px;min-width:190px}
+.workspace.preview-mode .composition-build-grid{flex:1;min-width:0;gap:6px;justify-content:flex-start}
+.workspace.preview-mode .composition-icon{width:52px;height:52px}
+@media(max-width:1050px){
+  .workspace.preview-mode .composition-build-card{gap:10px}
+  .workspace.preview-mode .composition-build-header{flex-basis:160px;min-width:160px}
+  .workspace.preview-mode .composition-icon{width:46px;height:46px}
+}
+@media(max-width:680px){
+  .workspace.preview-mode .composition-build-card{align-items:flex-start;flex-direction:column;gap:7px}
+  .workspace.preview-mode .composition-build-header{flex-basis:auto;min-width:0;width:100%}
+  .workspace.preview-mode .composition-build-grid{width:100%}
+  .workspace.preview-mode .composition-icon{width:40px;height:40px}
+}
+
+
+/* 0.3.22: dedicated ZvZ composition library */
+.zvz-editor-help,.zvz-name-note{color:var(--muted);font-size:12px;line-height:1.45}
+.zvz-add-row{grid-template-columns:1fr auto}
+.zvz-add-row button{grid-column:auto;width:auto}
+.zvz-build-list{display:grid;gap:8px}
+.zvz-build-row{display:flex;align-items:center;gap:10px;background:#111419;border:1px solid var(--border);border-radius:10px;padding:9px 11px;min-width:0}
+.zvz-build-number{width:30px;height:30px;border-radius:8px;background:var(--panel2);display:grid;place-items:center;color:var(--accent);font-weight:800;flex:none}
+.zvz-build-name{width:180px;flex:none;min-width:0}
+.zvz-player-name{width:100%;box-sizing:border-box;background:#0e1014;color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 9px;outline:none}
+.zvz-player-name:focus{border-color:var(--accent)}
+.zvz-build-name small{display:block;color:var(--muted);font-size:10px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.zvz-build-row .composition-build-grid{display:flex;flex:1;flex-wrap:nowrap;gap:5px;align-items:center;min-width:0;overflow:hidden}
+.zvz-build-row .composition-icon{width:clamp(34px,4vw,58px);height:clamp(34px,4vw,58px);flex:0 0 auto}
+.zvz-preview-actions{display:flex;justify-content:flex-end;margin-top:10px}
+@media(max-width:800px){.zvz-build-row{align-items:stretch;flex-wrap:wrap}.zvz-build-name{width:calc(100% - 40px)}.zvz-build-row .composition-build-grid{width:100%;flex-basis:100%}.zvz-add-row{grid-template-columns:1fr}.zvz-add-row button{width:100%}}
+
+/* Normal compositions use preset + role, without player names. */
+.composition-add-row-simple{grid-template-columns:1fr 1.25fr auto}
+.composition-add-row-simple button{grid-column:auto}
+@media(max-width:680px){.composition-add-row-simple{grid-template-columns:1fr}.composition-add-row-simple button{grid-column:auto}}
+
+
+/* 0.3.28: backup / restore controls */
+.backup-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:10px 0 14px}
+.backup-actions .ghost{font-size:12px;padding:9px 8px;white-space:nowrap}
+@media(max-width:680px){.backup-actions{grid-template-columns:1fr 1fr}}
+
+
+/* 0.3.29: wider library + compact cards with ellipsis */
+.workspace{grid-template-columns:minmax(390px,420px) minmax(600px,1fr) minmax(520px,560px)}
+.preset-card,.composition-card{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;min-width:0}
+.preset-card > div:first-child,.composition-card > div:first-child{min-width:0;overflow:hidden}
+.preset-card strong,.composition-card strong{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.preset-card small,.composition-card small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.preset-actions{display:flex;gap:6px;flex-wrap:nowrap;min-width:max-content}
+.preset-actions .ghost{padding:8px 10px;white-space:nowrap}
+@media(max-width:1500px){
+  .workspace{grid-template-columns:minmax(360px,390px) minmax(540px,1fr) minmax(460px,500px)}
+}
+@media(max-width:1050px){
+  .workspace{grid-template-columns:minmax(300px,330px) minmax(480px,1fr) minmax(340px,390px)}
+}
+@media(max-width:680px){
+  .preset-card,.composition-card{grid-template-columns:1fr}
+  .preset-actions{display:grid;grid-template-columns:repeat(3,1fr);min-width:0}
+  .preset-actions button{width:100%;min-width:0}
+}
+
+
+/* 0.3.30: Butaneros Avalonicos industrial / Spanish butane aesthetic */
+:root{
+  --bg:#0d0f12;
+  --panel:#17191c;
+  --panel2:#202328;
+  --border:#3b3d3f;
+  --text:#f5f1e8;
+  --muted:#a8a39a;
+  --accent:#f2a51a;
+  --accent2:#ffbf3f;
+  --danger:#d9653c;
+  --orange:#e87518;
+}
+body{
+  background:
+    radial-gradient(circle at 85% 8%, rgba(242,165,26,.09), transparent 25%),
+    radial-gradient(circle at 8% 80%, rgba(232,117,24,.06), transparent 28%),
+    linear-gradient(145deg,#090b0d,#121417 55%,#0b0d0f);
+}
+.app{max-width:1680px}
+.topbar{
+  position:relative;
+  padding:10px 0 18px;
+  border-bottom:1px solid rgba(242,165,26,.18);
+}
+.topbar:after{
+  content:"";
+  position:absolute;left:0;bottom:-2px;width:180px;height:3px;
+  background:linear-gradient(90deg,var(--accent),var(--orange),transparent);
+  border-radius:3px;
+}
+.brand-block{display:flex;align-items:center;gap:13px;min-width:0}
+.guild-mark{
+  width:66px;height:66px;flex:0 0 66px;
+  display:flex;align-items:center;justify-content:center;
+  filter:drop-shadow(0 4px 8px rgba(0,0,0,.38));
+}
+.guild-mark img{
+  display:block;width:66px;height:66px;object-fit:contain;border-radius:0;
+}
+.guild-name{
+  color:var(--accent);font-size:10px;font-weight:900;letter-spacing:.16em;
+  margin-bottom:2px;text-transform:uppercase;
+}
+h1{font-size:29px;text-shadow:0 1px 0 #000}
+.topbar p{color:#bcb7ae}
+.build-panel,.selector,.item-editor,.presets-panel{
+  background:linear-gradient(145deg,rgba(27,29,32,.98),rgba(19,21,24,.98));
+  border-color:#3b3d3f;
+  box-shadow:0 10px 28px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.025);
+}
+.library-tab:hover,.library-tab.active{border-color:var(--accent)}
+.library-tab.active{box-shadow:inset 4px 0 0 var(--accent),0 0 0 1px rgba(242,165,26,.08)}
+.primary,.lang.active{
+  background:linear-gradient(180deg,#f5b52f,#dc8f0f);
+  color:#1b1307;
+  border-color:#f0a91f;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 3px 10px rgba(201,121,10,.16);
+}
+.primary:hover,.lang.active:hover{filter:brightness(1.06)}
+button,.ghost,.library-tab,.slot,.result{transition:border-color .15s,background .15s,transform .15s,box-shadow .15s}
+.slot{background:linear-gradient(145deg,#24282d,#1b1e22);border-color:#424448}
+.slot:hover,.slot.selected{border-color:var(--accent);box-shadow:0 0 0 1px rgba(242,165,26,.12),0 6px 18px rgba(0,0,0,.2)}
+.slot-label{color:#c7bba8}
+#buildName:focus,.filters input:focus,.filters select:focus,.editor-controls select:focus,.composition-name:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(242,165,26,.08)}
+.result:hover{border-color:var(--accent);background:#17191d;box-shadow:0 0 0 1px rgba(242,165,26,.08)}
+.ghost:hover{border-color:#77736c;background:#202226}
+.backup-actions .ghost{font-size:12px}
+.composition-card,.composition-member,.composition-build-card{border-color:#3c3e41;background:linear-gradient(145deg,#141619,#101214)}
+.composition-avatar{background:#25282d;color:var(--accent);border:1px solid #414348}
+.preview-kicker{color:var(--accent)}
+/* subtle warning-strip detail on major containers */
+.library-head h2:before,.composition-preview-head .preview-kicker:before{
+  content:"";display:inline-block;width:18px;height:3px;margin-right:7px;vertical-align:middle;
+  background:repeating-linear-gradient(135deg,var(--accent) 0 4px,#2b2418 4px 8px);border-radius:2px;
+}
+@media(max-width:680px){.guild-name{font-size:8px}.guild-mark{width:50px;height:50px;flex-basis:50px}.guild-mark img{width:50px;height:50px}.brand-block{gap:9px}}
+
+
+/* 0.3.31: give ZvZ player names more room and remove unnecessary preview help text */
+.zvz-build-row{gap:12px;padding:8px 12px;min-height:66px}
+.zvz-build-number{width:34px;height:34px}
+.zvz-build-name{width:240px;flex:0 0 240px;min-width:0}
+.zvz-player-name{font-size:14px;padding:8px 10px}
+.zvz-build-name small{font-size:10px}
+.zvz-build-row .composition-build-grid{gap:5px}
+.zvz-build-row .composition-icon{width:48px;height:48px}
+@media(max-width:1100px){
+  .zvz-build-name{width:210px;flex-basis:210px}
+  .zvz-build-row .composition-icon{width:44px;height:44px}
+}
+@media(max-width:800px){
+  .zvz-build-name{width:calc(100% - 46px);flex-basis:auto}
+  .zvz-build-row .composition-icon{width:42px;height:42px}
+}
+
+/* 0.3.32: compact preview width - reduce unused right space and give names more room */
+.workspace.preview-mode .composition-preview{max-width:1180px;margin-right:auto}
+.workspace.preview-mode .composition-builds{align-items:start}
+.workspace.preview-mode .composition-build-card{width:100%;box-sizing:border-box}
+.zvz-build-row{max-width:1120px;box-sizing:border-box}
+.zvz-build-name{width:300px;flex:0 0 300px}
+@media(max-width:1250px){
+  .workspace.preview-mode .composition-preview{max-width:none}
+  .zvz-build-row{max-width:none}
+  .zvz-build-name{width:270px;flex-basis:270px}
+}
+@media(max-width:1100px){
+  .zvz-build-name{width:240px;flex-basis:240px}
+}
+@media(max-width:800px){
+  .zvz-build-name{width:calc(100% - 46px);flex-basis:auto}
+}
+
+/* 0.3.32: compact preview width - reduce unused right space and give names more room */
+.workspace.preview-mode .composition-preview{max-width:1180px;margin-right:auto}
+.workspace.preview-mode .composition-builds{align-items:start}
+.workspace.preview-mode .composition-build-card{width:100%;box-sizing:border-box}
+.zvz-build-row{max-width:1120px;box-sizing:border-box}
+.zvz-build-name{width:300px;flex:0 0 300px}
+@media(max-width:1250px){
+  .workspace.preview-mode .composition-preview{max-width:none}
+  .zvz-build-row{max-width:none}
+  .zvz-build-name{width:270px;flex-basis:270px}
+}
+@media(max-width:1100px){
+  .zvz-build-name{width:240px;flex-basis:240px}
+}
+@media(max-width:800px){
+  .zvz-build-name{width:calc(100% - 46px);flex-basis:auto}
+}
+
+/* 0.3.33: fixed-width composition preview rows */
+@media(min-width:1251px){
+  .workspace.preview-mode{
+    grid-template-columns:320px 1200px;
+    justify-content:start;
+    gap:18px;
+  }
+  .workspace.preview-mode > .build-panel{
+    width:1200px;
+    max-width:1200px;
+    min-width:1200px;
+  }
+  .workspace.preview-mode .composition-preview{
+    width:100%;
+    max-width:none;
+    min-width:0;
+  }
+  .workspace.preview-mode .composition-builds,
+  .workspace.preview-mode .composition-build-card{
+    width:100%;
+    min-width:0;
+    box-sizing:border-box;
+  }
+  .zvz-build-row{
+    width:100%;
+    max-width:none;
+    min-width:0;
+    box-sizing:border-box;
+  }
+  .zvz-build-name{
+    width:320px;
+    flex:0 0 320px;
+  }
+}
+
+/* 0.3.35: preview keeps the same central width as the build creator */
+@media(min-width:1251px){
+  .workspace.preview-mode{
+    grid-template-columns:350px 600px;
+    justify-content:start;
+    gap:18px;
+  }
+  .workspace.preview-mode > .build-panel{
+    width:600px;
+    max-width:600px;
+    min-width:600px;
+  }
+  .workspace.preview-mode .composition-preview{
+    width:100%;
+    max-width:600px;
+    min-width:0;
+  }
+  .workspace.preview-mode .composition-builds{
+    grid-template-columns:1fr;
+    gap:8px;
+  }
+  .workspace.preview-mode .composition-build-card{
+    width:100%;
+    max-width:600px;
+    min-width:0;
+    box-sizing:border-box;
+    padding:9px 10px;
+  }
+  .workspace.preview-mode .composition-build-header{
+    margin-bottom:6px;
+  }
+  .workspace.preview-mode .composition-build-grid{
+    gap:4px;
+  }
+  .workspace.preview-mode .composition-icon{
+    width:42px;
+    height:42px;
+    min-width:42px;
+  }
+  .zvz-build-row{
+    width:100%;
+    max-width:600px;
+    min-width:0;
+    box-sizing:border-box;
+  }
+  .zvz-build-name{
+    width:155px;
+    flex:0 0 155px;
+  }
+  .zvz-build-row .composition-icon{
+    width:40px;
+    height:40px;
+  }
+}
+
+/* 0.3.36: wider fixed player/preset name area in preview */
+.workspace.preview-mode .zvz-build-name,
+.workspace.preview-mode .composition-build-header{
+  flex:0 0 250px;
+  width:250px;
+  min-width:250px;
+  max-width:250px;
+}
+.workspace.preview-mode .zvz-build-row .composition-build-grid{
+  flex:1 1 auto;
+  min-width:0;
+}
+@media(max-width:1050px){
+  .workspace.preview-mode .zvz-build-name,
+  .workspace.preview-mode .composition-build-header{
+    flex-basis:220px;
+    width:220px;
+    min-width:220px;
+    max-width:220px;
+  }
+}
+@media(max-width:680px){
+  .workspace.preview-mode .zvz-build-name,
+  .workspace.preview-mode .composition-build-header{
+    width:100%;
+    min-width:0;
+    max-width:none;
+    flex-basis:auto;
+  }
+}
+
+/* 0.3.42: restore full preview width so every equipment slot is visible */
+@media(min-width:1251px){
+  .workspace.preview-mode{
+    grid-template-columns:350px 900px;
+    justify-content:start;
+    gap:18px;
+  }
+  .workspace.preview-mode > .build-panel{
+    width:900px;
+    max-width:900px;
+    min-width:900px;
+  }
+  .workspace.preview-mode .composition-preview{
+    width:100%;
+    max-width:none;
+    min-width:0;
+  }
+  .workspace.preview-mode .composition-builds{
+    width:100%;
+    grid-template-columns:1fr;
+    gap:8px;
+  }
+  .workspace.preview-mode .composition-build-card{
+    width:100%;
+    max-width:none;
+    min-width:0;
+    box-sizing:border-box;
+    padding:9px 10px;
+  }
+  .workspace.preview-mode .composition-build-header{
+    flex:0 0 250px;
+    width:250px;
+    min-width:250px;
+    max-width:250px;
+  }
+  .workspace.preview-mode .composition-build-grid{
+    flex:1 1 auto;
+    width:auto;
+    min-width:0;
+    gap:5px;
+    overflow:visible;
+    justify-content:flex-start;
+  }
+  .workspace.preview-mode .composition-icon{
+    width:52px;
+    height:52px;
+    min-width:52px;
+    flex:0 0 52px;
+  }
+  .workspace.preview-mode .zvz-build-row{
+    width:100%;
+    max-width:none;
+    min-width:0;
+    box-sizing:border-box;
+  }
+  .workspace.preview-mode .zvz-build-name{
+    width:250px;
+    flex:0 0 250px;
+    min-width:250px;
+    max-width:250px;
+  }
+  .workspace.preview-mode .zvz-build-row .composition-build-grid{
+    flex:1 1 auto;
+    width:auto;
+    min-width:0;
+    overflow:visible;
+    gap:5px;
+  }
+  .workspace.preview-mode .zvz-build-row .composition-icon{
+    width:52px;
+    height:52px;
+    min-width:52px;
+    flex:0 0 52px;
+  }
+}
+
+/* Never clip equipment in the desktop preview. */
+.workspace.preview-mode .composition-build-grid,
+.workspace.preview-mode .zvz-build-row .composition-build-grid{
+  overflow:visible;
+}
+
+/* 0.3.36: compact three-dot action menus */
+.action-menu{
+  position:relative;
+  flex:none;
+}
+.action-menu > summary{
+  list-style:none;
+}
+.action-menu > summary::-webkit-details-marker{display:none}
+.action-menu-trigger{
+  width:44px;
+  min-width:44px;
+  height:38px;
+  padding:6px 10px;
+  display:grid;
+  place-items:center;
+  font-size:18px;
+  line-height:1;
+  cursor:pointer;
+  user-select:none;
+}
+.action-menu[open] .action-menu-trigger{
+  border-color:var(--accent);
+  background:var(--panel2);
+}
+.action-menu-dropdown{
+  position:absolute;
+  right:0;
+  top:calc(100% + 6px);
+  z-index:1000;
+  min-width:150px;
+  padding:6px;
+  display:grid;
+  gap:4px;
+  background:#111419;
+  border:1px solid var(--border);
+  border-radius:10px;
+  box-shadow:0 12px 28px rgba(0,0,0,.45);
+}
+.action-menu-dropdown .ghost{
+  width:100%;
+  text-align:left;
+  padding:9px 10px;
+  white-space:nowrap;
+}
+.action-menu-dropdown .ghost:hover{
+  border-color:var(--accent);
+}
+.preset-card > .action-menu,
+.composition-card > .action-menu{
+  margin-left:auto;
+}
+@media(max-width:680px){
+  .action-menu-dropdown{
+    right:0;
+    min-width:145px;
+  }
+}
+
+/* 0.3.37: keep the library panel and its cards identical in preview mode */
+@media(min-width:1251px){
+  .workspace.preview-mode > .presets-panel{
+    width:350px;
+    min-width:350px;
+    max-width:350px;
+    box-sizing:border-box;
+  }
+  .workspace.preview-mode .library-content,
+  .workspace.preview-mode #presetsList,
+  .workspace.preview-mode #compositionsPanel,
+  .workspace.preview-mode #zvzPanel,
+  .workspace.preview-mode #compositionList,
+  .workspace.preview-mode #zvzList{
+    width:100%;
+    min-width:0;
+    max-width:none;
+    box-sizing:border-box;
+  }
+  .workspace.preview-mode .preset-card,
+  .workspace.preview-mode .composition-card{
+    width:100%;
+    min-width:0;
+    max-width:none;
+    box-sizing:border-box;
+  }
+}
+
+/* 0.3.39: preview sidebar must use the SAME width as the normal library at every desktop breakpoint */
+@media(min-width:1501px){
+  .workspace.preview-mode{
+    grid-template-columns:350px 600px;
+  }
+  .workspace.preview-mode > .presets-panel{
+    width:350px;
+    min-width:350px;
+    max-width:350px;
+  }
+}
+@media(min-width:1051px) and (max-width:1500px){
+  .workspace.preview-mode{
+    grid-template-columns:320px 600px;
+  }
+  .workspace.preview-mode > .presets-panel{
+    width:320px;
+    min-width:320px;
+    max-width:320px;
+  }
+}
+@media(min-width:851px) and (max-width:1050px){
+  .workspace.preview-mode{
+    grid-template-columns:280px 600px;
+  }
+  .workspace.preview-mode > .presets-panel{
+    width:280px;
+    min-width:280px;
+    max-width:280px;
+  }
+}
+
+/* 0.3.39: PREVIEW MUST USE THE EXACT SAME LIBRARY COLUMN AS CREATOR.
+   Earlier preview rules hard-coded smaller widths (350/320/280), which caused
+   the Biblioteca panel to shrink when clicking Ver. This final rule intentionally
+   mirrors the normal .workspace breakpoints from 0.3.29. */
+@media(min-width:1501px){
+  .workspace.preview-mode{
+    grid-template-columns:minmax(390px,420px) 600px !important;
+    gap:18px;
+  }
+  .workspace.preview-mode > .presets-panel{
+    width:auto !important;
+    min-width:0 !important;
+    max-width:none !important;
+  }
+}
+@media(min-width:1051px) and (max-width:1500px){
+  .workspace.preview-mode{
+    grid-template-columns:minmax(360px,390px) 600px !important;
+    gap:16px;
+  }
+  .workspace.preview-mode > .presets-panel{
+    width:auto !important;
+    min-width:0 !important;
+    max-width:none !important;
+  }
+}
+@media(min-width:851px) and (max-width:1050px){
+  .workspace.preview-mode{
+    grid-template-columns:minmax(300px,330px) 600px !important;
+    gap:14px;
+  }
+  .workspace.preview-mode > .presets-panel{
+    width:auto !important;
+    min-width:0 !important;
+    max-width:none !important;
+  }
+}
+@media(max-width:850px){
+  .workspace.preview-mode > .presets-panel{
+    width:100% !important;
+    min-width:0 !important;
+    max-width:none !important;
+  }
+}
+
+
+/* 0.3.41: fit complete build in fixed 600px preview */
+.workspace.preview-mode .composition-build-card{gap:10px;padding:7px 10px;min-height:60px}
+.workspace.preview-mode .composition-build-header{flex:0 0 145px;min-width:145px;gap:7px}
+.workspace.preview-mode .composition-avatar{width:30px;height:30px;font-size:12px}
+.workspace.preview-mode .composition-build-info strong{font-size:13px}
+.workspace.preview-mode .composition-build-info span{font-size:10px}
+.workspace.preview-mode .composition-build-info small{font-size:9px}
+.workspace.preview-mode .composition-build-grid{flex:1 1 auto;min-width:0;display:flex;flex-wrap:nowrap;gap:3px;overflow:hidden}
+.workspace.preview-mode .composition-icon{width:40px;height:40px;flex:0 0 40px}
+
+.zvz-build-row{gap:8px;padding:7px 9px}
+.zvz-build-name{width:150px}
+.zvz-build-row .composition-build-grid{gap:3px;overflow:hidden}
+.zvz-build-row .composition-icon{width:40px;height:40px;flex:0 0 40px}
+
+@media(max-width:1050px){
+  .workspace.preview-mode .composition-build-header{flex-basis:145px;min-width:145px}
+  .workspace.preview-mode .composition-icon{width:40px;height:40px;flex-basis:40px}
+  .zvz-build-name{width:145px}
+  .zvz-build-row .composition-icon{width:40px;height:40px;flex-basis:40px}
+}
