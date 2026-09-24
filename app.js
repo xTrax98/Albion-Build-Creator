@@ -15,7 +15,7 @@ const I18N = {
     selectWeapon:"Seleccionar objeto", selectorHelp:"Busca por nombre o filtra por categoría.", offhandCompatibility:"Con un arma de una mano puedes elegir cualquier secundaria válida.",
     close:"Cerrar", cancel:"Cancelar", searchPlaceholder:"Buscar objeto...", chooseVariant:"Configura el tier, encantamiento y calidad.", equipmentVariantHelp:"Elige la variante que quieres añadir a la build.", consumableVariantHelp:"Este objeto no utiliza encantamiento ni calidad.",
     savePreset:"Guardar como preset", newBuild:"Nueva build", presets:"Presets", presetsHelp:"Guarda builds para reutilizarlas más tarde.",
-    library:"Biblioteca", libraryHelp:"Organiza tus builds y composiciones.", exportAll:"Exportar todo", importAll:"Importar todo", exportDone:"Datos exportados correctamente.", importDone:"Datos importados correctamente.", importInvalid:"El archivo no es un respaldo válido de Albion Build Creator.", importConfirm:"Importar este respaldo reemplazará tus presets y composiciones actuales. ¿Continuar?", myPresets:"Mis presets", myCompositions:"Mis composiciones", myZvZCompositions:"Mis composiciones ZvZ",
+    library:"Biblioteca", libraryHelp:"Organiza tus builds y composiciones.", exportAll:"Exportar todo", importAll:"Importar todo", exportDone:"Datos exportados correctamente.", importDone:"Datos importados correctamente.", importInvalid:"El archivo no es un respaldo válido de Albion Build Creator.", importConfirm:"Los datos del respaldo se añadirán a los que ya tienes. No se borrará nada. ¿Continuar?", myPresets:"Mis presets", myCompositions:"Mis composiciones", myZvZCompositions:"Mis composiciones ZvZ",
     noPresets:"Todavía no hay presets guardados.", noCompositions:"Todavía no hay composiciones.", compositionsHelp:"Organiza presets por rol.",
     newComposition:"Nueva composición", newZvZComposition:"Nueva composición ZvZ", compositionName:"Nombre de la composición", player:"Jugador", role:"Rol", preset:"Preset", addMember:"Añadir miembro", saveComposition:"Guardar composición", cancel:"Cancelar",
     compositionSaved:"Composición guardada: ", presetsCount:"presets", edit:"Editar", view:"Ver", backToCreator:"Volver al creador", saveNames:"Guardar nombres", zvzNamePlaceholder:"Nombre del jugador", zvzPreset:"Preset", zvzCompositionHelp:"Selecciona presets para tu composición ZvZ. Los nombres se ponen desde Ver.", compositionPreview:"Vista previa de la composición", players:"jugadores",
@@ -33,7 +33,7 @@ const I18N = {
     selectWeapon:"Select item", selectorHelp:"Search by name or filter by category.", offhandCompatibility:"With a one-handed weapon you can choose any valid off-hand.",
     close:"Close", cancel:"Cancel", searchPlaceholder:"Search item...", chooseVariant:"Configure tier, enchantment and quality.", equipmentVariantHelp:"Choose the variant you want to add to the build.", consumableVariantHelp:"This item does not use enchantment or quality.",
     savePreset:"Save as preset", newBuild:"New build", presets:"Presets", presetsHelp:"Save builds to reuse them later.",
-    library:"Library", libraryHelp:"Organize your builds and compositions.", exportAll:"Export all", importAll:"Import all", exportDone:"Data exported successfully.", importDone:"Data imported successfully.", importInvalid:"This file is not a valid Albion Build Creator backup.", importConfirm:"Importing this backup will replace your current presets and compositions. Continue?", myPresets:"My presets", myCompositions:"My compositions", myZvZCompositions:"My ZvZ compositions",
+    library:"Library", libraryHelp:"Organize your builds and compositions.", exportAll:"Export all", importAll:"Import all", exportDone:"Data exported successfully.", importDone:"Data imported successfully.", importInvalid:"This file is not a valid Albion Build Creator backup.", importConfirm:"The backup data will be added to what you already have. Nothing will be deleted. Continue?", myPresets:"My presets", myCompositions:"My compositions", myZvZCompositions:"My ZvZ compositions",
     noPresets:"No saved presets yet.", noCompositions:"No compositions yet.", compositionsHelp:"Organize presets by role.",
     newComposition:"New composition", newZvZComposition:"New ZvZ composition", compositionName:"Composition name", player:"Player", role:"Role", preset:"Preset", addMember:"Add member", saveComposition:"Save composition", cancel:"Cancel",
     compositionSaved:"Composition saved: ", presetsCount:"presets", edit:"Edit", view:"View", backToCreator:"Back to creator", saveNames:"Save names", zvzNamePlaceholder:"Player name", zvzPreset:"Preset", zvzCompositionHelp:"Select presets for your ZvZ composition. Names are entered from View.", compositionPreview:"Composition preview", players:"players",
@@ -128,12 +128,53 @@ function importAllData(file){
       if(!valid){ alert(t("importInvalid")); return; }
       if(!confirm(t("importConfirm"))) return;
 
-      savePresets(data.presets);
-      saveCompositions(data.compositions);
-      saveZvZCompositions(data.zvzCompositions);
-      state.build=JSON.parse(JSON.stringify(data.currentBuild || {}));
-      $("#buildName").value=data.currentBuildName || "";
-      syncWeaponSlots();
+      // Importar significa AÑADIR. Nunca reemplazamos lo que ya existe.
+      // Generamos nuevos IDs para que los datos importados no entren en conflicto
+      // con presets/composiciones que ya estén guardados en este navegador.
+      const existingPresets=getPresets();
+      const existingCompositions=getCompositions();
+      const existingZvZ=getZvZCompositions();
+
+      const presetIdMap=new Map();
+      const importedPresets=data.presets.map(original=>{
+        const oldId=String(original.id ?? "");
+        const newId=makeCopyId("imported-preset");
+        if(oldId) presetIdMap.set(oldId,newId);
+        return {
+          ...JSON.parse(JSON.stringify(original)),
+          id:newId,
+          createdAt:original.createdAt || new Date().toISOString()
+        };
+      });
+
+      const importedCompositions=data.compositions.map(original=>({
+        ...JSON.parse(JSON.stringify(original)),
+        id:makeCopyId("imported-composition"),
+        createdAt:original.createdAt || new Date().toISOString(),
+        members:(original.members||[]).map(member=>({
+          ...JSON.parse(JSON.stringify(member)),
+          id:makeCopyId("imported-member"),
+          presetId:presetIdMap.get(String(member.presetId ?? "")) || member.presetId
+        }))
+      }));
+
+      const importedZvZ=data.zvzCompositions.map(original=>({
+        ...JSON.parse(JSON.stringify(original)),
+        id:makeCopyId("imported-zvz"),
+        createdAt:original.createdAt || new Date().toISOString(),
+        members:(original.members||[]).map(member=>({
+          ...JSON.parse(JSON.stringify(member)),
+          id:makeCopyId("imported-zvz-member"),
+          presetId:presetIdMap.get(String(member.presetId ?? "")) || member.presetId
+        }))
+      }));
+
+      savePresets(existingPresets.concat(importedPresets));
+      saveCompositions(existingCompositions.concat(importedCompositions));
+      saveZvZCompositions(existingZvZ.concat(importedZvZ));
+
+      // La build que está abierta actualmente también se conserva.
+      // El respaldo importado se incorpora a la biblioteca sin pisar el trabajo actual.
       renderBuild();
       renderPresets();
       renderCompositions();
@@ -148,12 +189,12 @@ function importAllData(file){
       const status=$("#status");
       if(status) status.textContent=t("importDone");
     }catch(err){
+      console.error(err);
       alert(t("importInvalid"));
     }
   };
   reader.readAsText(file);
 }
-
 let editingCompositionId = null;
 let editingZvZCompositionId = null;
 let viewedCompositionId = null;
