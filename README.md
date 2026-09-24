@@ -1,3 +1,3 @@
-# Albion Build Creator 0.3.80 TEST
+# Albion Build Creator 0.3.81 TEST
 
-Experimental voice-recognition update. Stable remains 0.3.44.
+Test version: fixes item icons being slightly clipped at the bottom in the normal composition preview. Stable remains 0.3.80.

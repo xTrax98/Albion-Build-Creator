@@ -926,3 +926,16 @@ button,.ghost,.library-tab,.slot,.result{transition:border-color .15s,background
   0%,100% { box-shadow: 0 0 0 2px rgba(228,91,91,.14), 0 0 12px rgba(228,91,91,.18); }
   50% { box-shadow: 0 0 0 4px rgba(228,91,91,.20), 0 0 22px rgba(228,91,91,.34); }
 }
+
+
+/* 0.3.81 TEST: prevent composition preview item art from being clipped at the bottom.
+   Give the icon a tiny inner margin and render the image as a block element. */
+.workspace.preview-mode .composition-build-card .composition-icon {
+  padding: 1px;
+}
+.workspace.preview-mode .composition-build-card .composition-icon img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
