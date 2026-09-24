@@ -631,6 +631,98 @@ function setLibraryTab(tab){
   }
 }
 
+/* 0.3.97 TEST: action menus are rendered in a body-level portal.
+   This removes them from every library/card stacking and overflow context, so
+   the menu is visually and interactively above absolutely everything. */
+(function installActionMenuPortal(){
+  let portal = null;
+  let sourceMenu = null;
+
+  function closePortal(){
+    document.querySelectorAll(".action-menu[open]").forEach(menu=>menu.removeAttribute("open"));
+    if(portal){ portal.remove(); portal=null; }
+    sourceMenu=null;
+  }
+
+  function runPortalAction(button){
+    const attrs = button.dataset;
+    closePortal();
+    if(attrs.loadPreset) return loadPreset(attrs.loadPreset);
+    if(attrs.duplicatePreset) return duplicatePreset(attrs.duplicatePreset);
+    if(attrs.renamePreset) return renamePreset(attrs.renamePreset);
+    if(attrs.deletePreset) return deletePreset(attrs.deletePreset);
+    if(attrs.viewComposition) return showCompositionPreview(attrs.viewComposition);
+    if(attrs.duplicateComposition) return duplicateComposition(attrs.duplicateComposition);
+    if(attrs.renameComposition) return renameComposition(attrs.renameComposition);
+    if(attrs.editComposition) return openCompositionEditor(attrs.editComposition);
+    if(attrs.deleteComposition) return deleteComposition(attrs.deleteComposition);
+    if(attrs.viewZvZ) return showZvZPreview(attrs.viewZvZ);
+    if(attrs.duplicateZvZ) return duplicateZvZ(attrs.duplicateZvZ);
+    if(attrs.renameZvZ) return renameZvZ(attrs.renameZvZ);
+    if(attrs.editZvZ) return openZvZEditor(attrs.editZvZ);
+    if(attrs.deleteZvZ) return deleteZvZComposition(attrs.deleteZvZ);
+  }
+
+  function openPortal(details){
+    closePortal();
+    sourceMenu=details;
+    details.setAttribute("open","");
+
+    portal=document.createElement("div");
+    portal.className="action-menu-portal";
+    portal.innerHTML=details.querySelector(".action-menu-dropdown")?.innerHTML || "";
+    document.body.appendChild(portal);
+
+    const trigger=details.querySelector(".action-menu-trigger");
+    const r=trigger.getBoundingClientRect();
+    portal.style.width=Math.max(150, Math.ceil(r.width + 100))+"px";
+
+    const gap=6;
+    const menuRect=portal.getBoundingClientRect();
+    let left=Math.min(r.right-menuRect.width, window.innerWidth-8);
+    left=Math.max(8,left);
+    let top=r.bottom+gap;
+    if(top+menuRect.height>window.innerHeight-8 && r.top-menuRect.height-gap>=8){
+      top=r.top-menuRect.height-gap;
+    }
+    portal.style.left=Math.round(left)+"px";
+    portal.style.top=Math.round(top)+"px";
+
+    portal.addEventListener("click", event=>{
+      const button=event.target.closest("button");
+      if(!button) return;
+      event.preventDefault();
+      event.stopPropagation();
+      runPortalAction(button);
+    });
+  }
+
+  document.addEventListener("pointerdown", event=>{
+    const trigger=event.target.closest?.(".action-menu-trigger");
+    if(trigger){
+      event.preventDefault();
+      event.stopPropagation();
+      openPortal(trigger.closest("details"));
+      return;
+    }
+    if(portal && !portal.contains(event.target)){
+      event.preventDefault();
+      event.stopPropagation();
+      closePortal();
+    }
+  }, true);
+
+  document.addEventListener("click", event=>{
+    if(event.target.closest?.(".action-menu-trigger")){
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }, true);
+
+  window.addEventListener("resize",()=>{ if(sourceMenu && portal) openPortal(sourceMenu); });
+  window.addEventListener("scroll",()=>{ if(sourceMenu && portal) openPortal(sourceMenu); }, true);
+})();
+
 document.querySelectorAll("[data-library-tab]").forEach(b=>b.addEventListener("click",()=>setLibraryTab(b.dataset.libraryTab)));
 $("#newComposition")?.addEventListener("click",()=>openCompositionEditor());
 $("#newZvZComposition")?.addEventListener("click",()=>openZvZEditor());

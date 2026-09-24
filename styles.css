@@ -1029,3 +1029,74 @@ button,.ghost,.library-tab,.slot,.result{transition:border-color .15s,background
   z-index:1;
   pointer-events:auto;
 }
+
+/* 0.3.96: opened action menu is its own top stacking layer. */
+.library-section:has(.action-menu[open]) .library-content {
+  position: relative;
+  z-index: 2147483646;
+}
+.library-section:has(.action-menu[open]) .action-menu {
+  position: relative;
+  z-index: 2147483647;
+}
+.library-section:has(.action-menu[open]) .action-menu-dropdown {
+  pointer-events: auto;
+}
+
+/* 0.3.97 TEST: body-level action menu portal. It is outside all library
+   stacking/overflow contexts and therefore always wins visually and for clicks. */
+.action-menu-portal{
+  position:fixed !important;
+  z-index:2147483647 !important;
+  display:grid;
+  gap:4px;
+  padding:6px;
+  background:#111419;
+  border:1px solid var(--border);
+  border-radius:10px;
+  box-shadow:0 12px 32px rgba(0,0,0,.6);
+  box-sizing:border-box;
+  pointer-events:auto !important;
+  isolation:isolate;
+}
+.action-menu-portal .ghost{
+  width:100%;
+  text-align:left;
+  padding:9px 10px;
+  white-space:nowrap;
+  position:relative;
+  z-index:1;
+  pointer-events:auto !important;
+}
+.action-menu-portal .ghost:hover{border-color:var(--accent)}
+
+/* 0.3.97 TEST: body-level action menu portal. */
+.action-menu-portal{
+  position:fixed !important;
+  z-index:2147483647 !important;
+  display:grid;
+  gap:4px;
+  padding:6px;
+  background:#111419;
+  border:1px solid var(--border);
+  border-radius:10px;
+  box-shadow:0 12px 32px rgba(0,0,0,.6);
+  box-sizing:border-box;
+  pointer-events:auto !important;
+  isolation:isolate;
+}
+.action-menu-portal .ghost{
+  width:100%;
+  text-align:left;
+  padding:9px 10px;
+  white-space:nowrap;
+  position:relative;
+  z-index:1;
+  pointer-events:auto !important;
+}
+.action-menu-portal .ghost:hover{border-color:var(--accent)}
+/* Hide the original dropdown while its body-level portal clone is active. */
+.action-menu[open] > .action-menu-dropdown{
+  visibility:hidden !important;
+  pointer-events:none !important;
+}
