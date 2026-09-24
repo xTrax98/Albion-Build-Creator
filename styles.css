@@ -898,3 +898,31 @@ button,.ghost,.library-tab,.slot,.result{transition:border-color .15s,background
   .zvz-build-name{width:145px}
   .zvz-build-row .composition-icon{width:40px;height:40px;flex-basis:40px}
 }
+
+/* 0.3.45: global voice build input */
+.voice-build-bar{display:flex;align-items:center;gap:10px;margin:-8px 0 14px}.voice-button{background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px 13px;font-weight:700}.voice-button:hover{border-color:var(--accent)}.voice-status{font-size:12px;color:var(--muted)}.voice-build-panel{background:#111419;border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px}.voice-build-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.voice-build-head strong,.voice-build-head small{display:block}.voice-build-head small{color:var(--muted);margin-top:4px}.voice-transcript{margin-top:12px;padding:12px;border:1px dashed var(--border);border-radius:9px;color:var(--muted);min-height:44px}.voice-matches{display:grid;gap:6px;margin-top:10px}.voice-match{display:grid;grid-template-columns:90px minmax(0,1fr) auto;gap:8px;align-items:center;background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:8px 10px}.voice-match span{color:var(--muted);font-size:12px;text-transform:uppercase}.voice-match strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.voice-match small{color:var(--accent);font-weight:700}.voice-ambiguous{display:grid;gap:4px;padding:9px;color:#ffcf7a;border:1px solid #6d5524;border-radius:8px;background:#211b10}.voice-ambiguous span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.voice-actions{display:flex;gap:8px;margin-top:10px}.voice-actions .primary{width:auto;flex:1}.voice-actions .ghost{padding:11px 14px}.voice-actions button:disabled{opacity:.55;cursor:not-allowed}@media(max-width:680px){.voice-build-bar{align-items:stretch;flex-direction:column}.voice-actions{flex-direction:column}.voice-match{grid-template-columns:1fr auto}.voice-match span{grid-column:1/-1}}
+
+/* 0.3.61: voice capture and object search are separate phases */
+#processVoice{border-color:var(--accent)}
+
+/* 0.3.70: voice workspace lives in the right sidebar so the central build stays visible */
+.voice-side-launcher{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.voice-side-launcher .voice-button{flex:0 0 auto}
+.right-sidebar .voice-build-panel{margin:0 0 12px}
+.right-sidebar .voice-build-panel .voice-actions{flex-wrap:wrap}
+.right-sidebar .voice-build-panel .voice-actions button{flex:1 1 auto}
+@media(max-width:680px){.voice-side-launcher{align-items:stretch;flex-direction:column}.right-sidebar .voice-build-panel .voice-actions{flex-direction:column}.right-sidebar .voice-build-panel .voice-actions button{width:100%}}
+
+/* Voice recording feedback */
+.voice-button.voice-recording, .voice-side-launcher.voice-recording .voice-button, #startVoice.voice-recording {
+  background: #b83232;
+  border-color: #e45b5b;
+  color: #fff;
+  box-shadow: 0 0 0 2px rgba(228,91,91,.18), 0 0 18px rgba(228,91,91,.28);
+  animation: voiceRecordingPulse 1.2s ease-in-out infinite;
+}
+.voice-side-launcher.voice-recording .voice-status { color: #ff8f8f; font-weight: 700; }
+@keyframes voiceRecordingPulse {
+  0%,100% { box-shadow: 0 0 0 2px rgba(228,91,91,.14), 0 0 12px rgba(228,91,91,.18); }
+  50% { box-shadow: 0 0 0 4px rgba(228,91,91,.20), 0 0 22px rgba(228,91,91,.34); }
+}

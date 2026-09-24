@@ -20,6 +20,7 @@ const I18N = {
     newComposition:"Nueva composición", newZvZComposition:"Nueva composición ZvZ", compositionName:"Nombre de la composición", player:"Jugador", role:"Rol", preset:"Preset", addMember:"Añadir miembro", saveComposition:"Guardar composición", cancel:"Cancelar",
     compositionSaved:"Composición guardada: ", presetsCount:"presets", edit:"Editar", view:"Ver", backToCreator:"Volver al creador", saveNames:"Guardar nombres", zvzNamePlaceholder:"Nombre del jugador", zvzPreset:"Preset", zvzCompositionHelp:"Selecciona presets para tu composición ZvZ. Los nombres se ponen desde Ver.", compositionPreview:"Vista previa de la composición", players:"jugadores",
     load:"Cargar", duplicate:"Duplicar", delete:"Eliminar", saved:"Preset guardado: ",
+    voiceBuild:"Crear build por voz", voiceListeningTitle:"Build por voz", voiceHelp:"Di los objetos de la build en cualquier orden.", voiceReady:"Pulsa el micrófono y habla.", startListening:"Escuchar", stopListening:"Parar", applyVoice:"Aplicar a la build", voiceUnsupported:"Tu navegador no admite reconocimiento de voz.", voiceListening:"Escuchando...", voiceNothing:"No he entendido ningún objeto.", voiceFound:"He encontrado:", voiceAmbiguous:"No he podido identificar con seguridad:", voiceApplied:"Build aplicada desde voz.", voiceStarting:"Activando micrófono...", voiceNoMatch:"No he detectado una frase clara. Prueba a hablar más cerca del micrófono.", voiceAudioStart:"Micrófono activo. Habla ahora.", voiceStartError:"No se pudo iniciar el reconocimiento.", clearVoice:"Limpiar", voiceSearching:"Buscando objetos...", voiceCleared:"Texto de voz limpiado.", voiceProcess:"Buscar objetos", voiceReadyToProcess:"Texto capturado. Pulsa Buscar objetos.",
     allCategories:"Todas las categorías", loading:"Cargando objetos...", tier:"Tier",
     enchantment:"Encantamiento", quality:"Calidad", add:"Añadir al build",
     loadingData:"Cargando base de objetos de Albion...", dataReady:"Objetos cargados: ",
@@ -37,6 +38,7 @@ const I18N = {
     newComposition:"New composition", newZvZComposition:"New ZvZ composition", compositionName:"Composition name", player:"Player", role:"Role", preset:"Preset", addMember:"Add member", saveComposition:"Save composition", cancel:"Cancel",
     compositionSaved:"Composition saved: ", presetsCount:"presets", edit:"Edit", view:"View", backToCreator:"Back to creator", saveNames:"Save names", zvzNamePlaceholder:"Player name", zvzPreset:"Preset", zvzCompositionHelp:"Select presets for your ZvZ composition. Names are entered from View.", compositionPreview:"Composition preview", players:"players",
     load:"Load", duplicate:"Duplicate", delete:"Delete", saved:"Preset saved: ",
+    voiceBuild:"Create build by voice", voiceListeningTitle:"Build by voice", voiceHelp:"Say the build items in any order.", voiceReady:"Press the microphone and speak.", startListening:"Listen", stopListening:"Stop", applyVoice:"Apply to build", voiceUnsupported:"Your browser does not support speech recognition.", voiceListening:"Listening...", voiceNothing:"I could not understand any item.", voiceFound:"Found:", voiceAmbiguous:"I could not identify with confidence:", voiceApplied:"Build applied from voice.", voiceStarting:"Activating microphone...", voiceNoMatch:"I did not detect a clear phrase. Try speaking closer to the microphone.", voiceAudioStart:"Microphone active. Speak now.", voiceStartError:"Could not start speech recognition.", clearVoice:"Clear", voiceSearching:"Searching items...", voiceCleared:"Voice text cleared.", voiceProcess:"Find objects", voiceReadyToProcess:"Text captured. Press Find objects.",
     allCategories:"All categories", loading:"Loading items...", tier:"Tier",
     enchantment:"Enchantment", quality:"Quality", add:"Add to build",
     loadingData:"Loading Albion item database...", dataReady:"Items loaded: ",
@@ -1029,6 +1031,656 @@ function renderBuild(){
   });
 }
 
+
+let voiceRecognition = null;
+let voiceResults = [];
+let voiceShouldListen = false;
+let voiceAccumulatedTranscript = "";
+let voiceSearchRunning = false;
+let voicePendingTranscript = "";
+let voiceIndex = new Map();
+let voiceAlbionWords = [];
+let voiceWordIndex = new Map();
+let voiceWordFuzzyIndex = new Map();
+const voiceSlotCache = new Map();
+
+function normalizeVoiceText(value){
+  return String(value||"")
+    .toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+    .replace(/[.,]/g," ")
+    .replace(/\s+/g," ")
+    .trim();
+}
+
+function voiceNumberWords(text){
+  return normalizeVoiceText(text)
+    .replace(/\buno\b/g,"1").replace(/\bdos\b/g,"2").replace(/\btres\b/g,"3")
+    .replace(/\bcuatro\b/g,"4").replace(/\bcinco\b/g,"5").replace(/\bseis\b/g,"6")
+    .replace(/\bsiete\b/g,"7").replace(/\bocho\b/g,"8").replace(/\bnueve\b/g,"9")
+    .replace(/\bcero\b/g,"0")
+    .replace(/\s+/g," ").trim();
+}
+
+function voiceVariant(text){
+  const s=voiceNumberWords(text);
+  let tier=null,enchant=0;
+  let m=s.match(/\b(?:t|tier)\s*([4-8])(?:\s*(?:punto|dot)\s*([0-4]))?\b/);
+  if(!m) m=s.match(/\b([4-8])\s*(?:punto|dot)\s*([0-4])\b/);
+  if(!m) m=s.match(/\b(?:t|tier)?\s*([4-8])\s+([0-4])\b/);
+  if(m){ tier=Number(m[1]); enchant=Number(m[2]||0); }
+  return {tier,enchant};
+}
+
+function voiceCleanName(text){
+  const s=voiceNumberWords(text);
+  return s
+    .replace(/\b(?:t|tier)\s*[4-8](?:\s*(?:punto|dot)\s*[0-4])?\b/g," ")
+    .replace(/\b[4-8]\s*(?:punto|dot)\s*[0-4]\b/g," ")
+    .replace(/\b(?:t|tier)?\s*[4-8]\s+[0-4]\b/g," ")
+    .replace(/\b(?:punto|dot|nivel|tier)\b/g," ")
+    .replace(/\b(?:quiero|ponme|pon|dame|usar|usa|con|llevar|llevo|ademas|además|una|un|la|el|las|los|de|del|of|the|a|an)\b/g," ")
+    // Conservamos las palabras de equipamiento (capucha, espada, capa, etc.).
+    // Muchos nombres reales de Albion contienen precisamente esas palabras
+    // (por ejemplo, "Capucha de erudito"), y quitarlas provoca empates.
+    .replace(/\s+/g," ").trim();
+}
+
+function voiceSlotFromText(text){
+  const s=normalizeVoiceText(text);
+  if(/\b(capa|capas|tapa|cape)\b/.test(s)) return "cape";
+  if(/\b(bolsa|bolsas|bag|bags)\b/.test(s)) return "bag";
+  if(/\b(pocion|pociones|potion|potions|gigantismo)\b/.test(s)) return "potion";
+  if(/\b(guiso|comida|comidas|estofado|tortilla|tortillas|food|stew|omelette)\b/.test(s)) return "food";
+  if(/\b(sandalia|sandalias|botas|zapatos|shoes|boots)\b/.test(s)) return "shoes";
+  if(/\b(capucha|casco|cascos|cabeza|helmet|helmets|hood|head)\b/.test(s)) return "head";
+  if(/\b(armadura|pecho|chaqueta|tunica|robe|armor|armour|chest|jacket)\b/.test(s)) return "armor";
+  if(/\b(secundaria|secundario|escudo|tomo|antorcha|orbe|offhand|shield|tome|torch|orb)\b/.test(s)) return "offhand";
+  if(/\b(arma|armas|espada|espadas|daga|dagas|hacha|hachas|maza|mazas|martillo|martillos|lanza|lanzas|arco|arcos|ballesta|ballestas|baston|bastones|guante|guantes|tallada|falce|falces|sword|swords|dagger|daggers|axe|axes|mace|maces|hammer|hammers|spear|spears|bow|bows|crossbow|crossbows|staff|staffs|glove|gloves|weapon)\b/.test(s)) return "mainhand";
+  return null;
+}
+
+function voiceCanonicalSegment(segment){
+  let s=normalizeVoiceText(segment);
+  s=s.replace(/\btapa\b/g,"capa");
+  // Thetford: keep the existing behaviour, but also accept the common
+  // speech split "ted for" / "tet for" / "te for".
+  s=s.replace(/\b(?:tedford|ted\s+for|tetford|tet\s+for|teford|te\s+for|thet\s+ford|thetford)\b/g,"thetford");
+  s=s.replace(/\b(?:marlock|mar lok|mart lok|marlow|marlo|martlok|mart lock)\b/g,"martlock");
+  // Caerleon: Chrome often inserts a space or slightly changes the vowel.
+  // Do not alter the Fort Sterling aliases here; its current fuzzy match is
+  // intentionally left untouched.
+  if(/\b(?:capa|cape)\b/.test(s)){
+    s=s.replace(/\b(?:caer\s+leon|caer\s+león|caerleon|caer\s+leaon|caer\s+leon|cair\s+leon|care\s+leon|car\s+leon)\b/g,"caerleon");
+  }
+  // Atajos de voz para ciudades/facciones de capas. Chrome puede deformar
+  // Lymhurst de muchas maneras (lym, lyn, link, lynk, ninjurse, etc.).
+  // Solo aplicamos estos alias cuando el segmento es una capa, para no
+  // convertir palabras normales de otros objetos en Lymhurst.
+  if(/\b(?:capa|cape)\b/.test(s)){
+    s=s.replace(/\b(?:lym|lim|lym\s+hurst|lynhurst|lynhur|lyn|link|lynk|ninjurse|ninjurs|lymhurst)\b/g,"lymhurst");
+    // Variantes habituales que el reconocimiento de voz produce para las capas.
+    s=s.replace(/\b(?:brazilia|brasilia|brecilia|brecilien)\b/g,"brecilien");
+    s=s.replace(/\b(?:brit\s*watch|britwatch|brid\s*watch|bridwatch|bridge\s*watch|bridgewatch|brid)\b/g,"bridgewatch");
+    s=s.replace(/\b(?:muerto\s+vivo|muerto\s+viviente|muerto\s+viviente)\b/g,"muerto viviente");
+  }
+  if(/\btallada\b/.test(s) && !/\bespada\b/.test(s)) s=s.replace(/\btallada\b/,"espada tallada");
+  s=s.replace(/\bcomida\s+guiso\b/g,"guiso");
+  s=s.replace(/\bbolsa\s+de\s+soldado\b/g,"botas de soldado");
+  return s.replace(/\s+/g," ").trim();
+}
+
+function voiceSegments(transcript){
+  let text=normalizeVoiceText(transcript)
+    .replace(/\b(quiero|una|un|build|con|ponme|pon|dame|usar|usa|llevar|llevo|ademas|además|y|and)\b/g," ")
+    .replace(/\s+/g," ").trim();
+  text=voiceCanonicalSegment(text);
+  const marker=/\b(?:capa|capas|cape|bolsa|bolsas|bag|bags|pocion|pociones|potion|potions|guiso|comida|comidas|estofado|tortilla|tortillas|sopa|sopas|pastel|pasteles|pan|ensalada|ensaladas|sandwich|sandwiches|food|stew|omelette|roast|pie|meal|sandalia|sandalias|botas|zapatos|shoes|boots|capucha|casco|cascos|cabeza|helmet|helmets|hood|head|armadura|pecho|chaqueta|tunica|robe|armor|armour|chest|jacket|secundaria|secundario|escudo|tomo|antorcha|orbe|offhand|shield|tome|torch|orb|arma|armas|espada|espadas|daga|dagas|hacha|hachas|maza|mazas|martillo|martillos|lanza|lanzas|arco|arcos|ballesta|ballestas|baston|bastones|guante|guantes|falce|falces|sword|swords|dagger|daggers|axe|axes|mace|maces|hammer|hammers|spear|spears|bow|bows|crossbow|crossbows|staff|staffs|glove|gloves|weapon)\b/g;
+  const matches=[...text.matchAll(marker)];
+  if(!matches.length) return text?[text]:[];
+  const out=[];
+  for(let i=0;i<matches.length;i++){
+    const a=matches[i].index;
+    const b=i+1<matches.length?matches[i+1].index:text.length;
+    const part=text.slice(a,b).trim();
+    if(part) out.push(voiceCanonicalSegment(part));
+  }
+  return out.filter(Boolean);
+}
+
+function voiceWordSimilarity(a,b){
+  a=normalizeVoiceText(a); b=normalizeVoiceText(b);
+  if(a===b) return 1;
+  const m=a.length,n=b.length;
+  if(!m||!n) return 0;
+  const prev=new Array(n+1); for(let j=0;j<=n;j++) prev[j]=j;
+  for(let i=1;i<=m;i++){
+    const cur=new Array(n+1); cur[0]=i;
+    for(let j=1;j<=n;j++) cur[j]=Math.min(cur[j-1]+1,prev[j]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));
+    for(let j=0;j<=n;j++) prev[j]=cur[j];
+  }
+  return 1-prev[n]/Math.max(m,n);
+}
+
+function voiceItemNames(item){
+  const out=[];
+  const add=v=>{ if(v && !out.includes(v)) out.push(v); };
+  add(getName(item));
+  add(item.name);
+  const names=item.names || item.LocalizedNames || item.localizedNames || {};
+  Object.values(names).forEach(add);
+  return out.map(normalizeVoiceText).filter(Boolean);
+}
+
+function voiceSlotForItem(item){
+  const slots=["head","armor","shoes","cape","bag","potion","food","offhand","mainhand"];
+  for(const slot of slots){
+    if(slot==="offhand" && !canUseOffhand()) continue;
+    if(matchesSlot(item,slot)) return slot;
+  }
+  return null;
+}
+
+function voiceQueryTokens(text){
+  return normalizeVoiceText(text)
+    .replace(/\b(?:quiero|ponme|pon|dame|usar|usa|llevar|llevo|ademas|además|una|un|la|el|las|los|de|del|con|y|and|a|an|the|of)\b/g," ")
+    // Slot words are useful for deciding where an item belongs, but they are
+    // not always present in Albion's localized item name (e.g. "capucha de
+    // clérigo" may be named "Hábito de clérigo" in the data).
+    .replace(/\b(?:capa|capas|tapa|cape|bolsa|bolsas|bag|bags|pocion|pociones|potion|potions|guiso|comida|comidas|estofado|food|stew|capucha|casco|cascos|cabeza|helmet|helmets|hood|head|armadura|pecho|chaqueta|tunica|robe|armor|armour|chest|jacket|sandalia|sandalias|botas|zapatos|shoes|boots|arma|armas|weapon|espada|espadas|sword|swords|daga|dagas|dagger|daggers|hacha|hachas|axe|axes|maza|mazas|mace|maces|martillo|martillos|hammer|hammers|lanza|lanzas|spear|spears|arco|arcos|bow|bows|ballesta|ballestas|crossbow|crossbows|baston|bastones|staff|staffs|guante|guantes|glove|gloves|secundaria|secundario|escudo|tomo|antorcha|orbe|offhand|shield|tome|torch|orb)\b/g," ")
+    .split(/\s+/).filter(Boolean)
+    .filter(t=>t.length>1 && !/^\d+$/.test(t));
+}
+function voiceItemSlot(item){
+  const id=String(item?.id||"");
+  if(voiceSlotCache.has(id)) return voiceSlotCache.get(id);
+  const slot=voiceSlotForItem(item);
+  voiceSlotCache.set(id,slot);
+  return slot;
+}
+
+function voiceTokens(text){
+  return voiceQueryTokens(text).filter(Boolean);
+}
+
+function voiceFamilyKey(item,slot){
+  const id=equipmentBaseId(item).replace(/^T\d+_/i,"");
+  // For bags/food/potions we want the actual named family, not merely the
+  // category, so different bag types do not collapse into one result.
+  return `${slot}|${id}`;
+}
+
+function voiceSpecialCandidate(item,slot,qNorm){
+  const name=normalizeVoiceText(getName(item));
+  const rest=equipmentBaseId(item).replace(/^T\d+_/i,"");
+  if(slot==="bag" && (qNorm==="bolsa" || qNorm==="bag")){
+    return (rest==="BAG" || /^(bolsa|bag)$/.test(name)) ? 1600 : 0;
+  }
+  if(slot==="food" && qNorm==="guiso"){
+    return (/\bguiso de ternera\b/.test(name) || /^MEAL_STEW(?:$|_)/i.test(rest)) && !/avalon/i.test(name+" "+rest) ? 1600 : 0;
+  }
+  if(slot==="food" && /\bguiso avalonico\b/.test(qNorm)){
+    return /\bguiso avalonico\b/.test(name) || /STEW.*AVALON/i.test(rest) ? 1600 : 0;
+  }
+  if(slot==="potion" && /^(pocion de energia|energia|pocion energia)$/.test(qNorm)){
+    return /\benergia\b/.test(name) || /ENERGY/i.test(rest) ? 1600 : 0;
+  }
+  if(slot==="potion" && /^(energia|pocion de energia|pocion energia)$/.test(qNorm)){
+    const energy=pool.filter(e=>{
+      const rest=equipmentBaseId(e.item).replace(/^T\d+_/i,"");
+      const name=normalizeVoiceText(getName(e.item));
+      return /\benergia\b/.test(name) || /ENERGY/i.test(rest);
+    });
+    if(energy.length) return energy;
+  }
+  if(slot==="food" && /^(tortilla|tortilla de cerdo)$/.test(qNorm)){
+    return /\btortilla de cerdo\b/.test(name) || /OMELETTE.*PORK|PORK.*OMELETTE/i.test(rest) ? 1600 : 0;
+  }
+  // The speech recognizer often turns “Thetford” into “tedford”, “tetford”
+  // or “teford”. voiceCanonicalSegment normalizes those spellings, but we
+  // still give the cape family a direct high-confidence match so a cape
+  // cannot lose to another object merely because of a phonetic spelling.
+  if(slot==="cape" && /\b(?:capa|cape)\b/.test(qNorm) && /\bthetford\b/.test(qNorm)){
+    return /\bthetford\b/.test(name) || /THETFORD/i.test(rest) ? 1600 : 0;
+  }
+  if(slot==="cape" && /\b(?:capa|cape)\b/.test(qNorm) && /\b(?:martlock|marlock|mar lok|mart lok|marlow|marlo|martlok|mart lock)\b/.test(qNorm)){
+    return /\bmartlock\b/.test(name) || /MARTLOCK/i.test(rest) ? 1600 : 0;
+  }
+  if(slot==="cape" && /\b(?:capa|cape)\b/.test(qNorm) && /\bcaerleon\b/.test(qNorm)){
+    return /\bcaerleon\b/.test(name) || /CAERLEON/i.test(rest) ? 1600 : 0;
+  }
+  return 0;
+}
+function voiceGenericCandidates(slot,qNorm,variant){
+  const pool=voiceIndex.get(slot)||[];
+  if(slot==="bag" && /^(bolsa|bag)$/.test(qNorm)){
+    const generic=pool.filter(e=>{
+      const rest=equipmentBaseId(e.item).replace(/^T\d+_/i,"");
+      const name=normalizeVoiceText(getName(e.item));
+      return rest==="BAG" || /^(bolsa|bag)$/.test(name);
+    });
+    if(generic.length) return generic;
+  }
+  if(slot==="food" && /^(guiso|stew|comida)$/.test(qNorm)){
+    const stew=pool.filter(e=>{
+      const rest=equipmentBaseId(e.item).replace(/^T\d+_/i,"");
+      const name=normalizeVoiceText(getName(e.item));
+      return (/^MEAL_STEW(?:$|_)/i.test(rest) || /\bguiso de ternera\b/.test(name)) && !/avalon/i.test(name+" "+rest);
+    });
+    if(stew.length) return stew;
+  }
+  if(slot==="potion" && /^(pocion de energia|energia|pocion energia)$/.test(qNorm)){
+    const energy=pool.filter(e=>{
+      const rest=equipmentBaseId(e.item).replace(/^T\d+_/i,"");
+      const name=normalizeVoiceText(getName(e.item));
+      return /\benergia\b/.test(name) || /ENERGY/i.test(rest);
+    });
+    if(energy.length) return energy;
+  }
+  if(slot==="potion" && /^(energia|pocion de energia|pocion energia)$/.test(qNorm)){
+    const energy=pool.filter(e=>{
+      const rest=equipmentBaseId(e.item).replace(/^T\d+_/i,"");
+      const name=normalizeVoiceText(getName(e.item));
+      return /\benergia\b/.test(name) || /ENERGY/i.test(rest);
+    });
+    if(energy.length) return energy;
+  }
+  if(slot==="food" && /^(tortilla|tortilla de cerdo)$/.test(qNorm)){
+    const tortilla=pool.filter(e=>{
+      const rest=equipmentBaseId(e.item).replace(/^T\d+_/i,"");
+      const name=normalizeVoiceText(getName(e.item));
+      return /\btortilla de cerdo\b/.test(name) || /OMELETTE.*PORK|PORK.*OMELETTE/i.test(rest);
+    });
+    if(tortilla.length) return tortilla;
+  }
+  return [];
+}
+
+
+function voiceJaro(a,b){
+  a=normalizeVoiceText(a); b=normalizeVoiceText(b);
+  if(a===b) return 1;
+  if(!a||!b) return 0;
+  const range=Math.max(Math.floor(Math.max(a.length,b.length)/2)-1,0);
+  const ma=new Array(a.length).fill(false), mb=new Array(b.length).fill(false);
+  let matches=0;
+  for(let i=0;i<a.length;i++){
+    const start=Math.max(0,i-range), end=Math.min(i+range+1,b.length);
+    for(let j=start;j<end;j++){
+      if(mb[j]||a[i]!==b[j]) continue;
+      ma[i]=true; mb[j]=true; matches++; break;
+    }
+  }
+  if(!matches) return 0;
+  const aa=[],bb=[];
+  for(let i=0;i<a.length;i++) if(ma[i]) aa.push(a[i]);
+  for(let j=0;j<b.length;j++) if(mb[j]) bb.push(b[j]);
+  let trans=0; for(let i=0;i<aa.length;i++) if(aa[i]!==bb[i]) trans++;
+  return (matches/a.length + matches/b.length + (matches-trans/2)/matches)/3;
+}
+
+function voicePhoneticKey(word){
+  let s=normalizeVoiceText(word)
+    .replace(/ph/g,'f').replace(/th/g,'t').replace(/ck/g,'k')
+    .replace(/qu/g,'k').replace(/c(?=[eiy])/g,'s').replace(/c/g,'k')
+    .replace(/z/g,'s').replace(/v/g,'b').replace(/w/g,'u')
+    .replace(/h/g,'').replace(/j/g,'y');
+  // Keep vowels lightly: browser ASR errors often preserve the consonant frame.
+  s=s.replace(/[aeiou]/g,'a').replace(/(.)\1+/g,'$1');
+  return s;
+}
+
+function voiceAlbionWordScore(spoken,known){
+  const a=normalizeVoiceText(spoken), b=normalizeVoiceText(known);
+  if(a===b) return 1;
+  if(a.length<3 || b.length<3) return 0;
+  const j=voiceJaro(a,b), d=voiceWordSimilarity(a,b);
+  const pk=voicePhoneticKey(a), qk=voicePhoneticKey(b);
+  const phon=pk&&qk?voiceJaro(pk,qk):0;
+  // Strong weight on actual spelling similarity, with phonetic shape as a
+  // second signal. This is applied to Albion vocabulary words, not arbitrary text.
+  return Math.max(d*0.55+j*0.25+phon*0.20, d*0.72+phon*0.28);
+}
+
+function voiceFuzzyBucketKey(word){
+  const k=voicePhoneticKey(word);
+  return `${k.slice(0,2)}|${Math.max(3,Math.min(12,word.length))}`;
+}
+
+function voiceNormalizeQueryWithAlbionWords(tokens){
+  return tokens.map(token=>{
+    if(!voiceAlbionWords.length || token.length<4) return token;
+    const keys=[];
+    const base=voiceFuzzyBucketKey(token);
+    keys.push(base);
+    const k=voicePhoneticKey(token);
+    for(let len=Math.max(3,token.length-2);len<=Math.min(12,token.length+2);len++){
+      keys.push(`${k.slice(0,1)}|${len}`);
+    }
+    const seen=new Set();
+    let best=token,bestScore=0;
+    for(const key of keys){
+      const bucket=voiceWordFuzzyIndex.get(key)||[];
+      for(const known of bucket){
+        if(seen.has(known)) continue;
+        seen.add(known);
+        const sc=voiceAlbionWordScore(token,known);
+        if(sc>bestScore){bestScore=sc;best=known;}
+      }
+    }
+    return bestScore>=0.70?best:token;
+  });
+}
+
+function voiceCandidateEntries(slot,qTokens){
+  const pools=[];
+  const seen=new Set();
+  const addEntry=entry=>{ if(!entry || seen.has(entry.item.id)) return; seen.add(entry.item.id); pools.push(entry); };
+  const tokenList=qTokens.filter(t=>t.length>=2);
+  for(const token of tokenList){
+    const direct=voiceWordIndex.get(`${slot}|${token}`)||[];
+    direct.forEach(addEntry);
+  }
+  // If no exact/normalized token produced candidates, use the slot pool as a
+  // small fallback. This keeps generic aliases working without scanning every
+  // item for every segment.
+  if(!pools.length) return voiceIndex.get(slot)||[];
+  return pools;
+}
+
+function voiceCandidates(segment){
+  segment=voiceCanonicalSegment(segment);
+  const spokenSlot=voiceSlotFromText(segment);
+  const variant=voiceVariant(segment);
+  const query=voiceCleanName(segment);
+  const qNorm=normalizeVoiceText(query);
+  const qTokens=voiceNormalizeQueryWithAlbionWords(voiceTokens(query));
+  let candidates=[];
+
+  if(spokenSlot){
+    const direct=voiceGenericCandidates(spokenSlot,qNorm,variant);
+    if(direct.length) candidates.push(...direct.map(e=>({item:e.item,slot:e.slot,score:1800,tier:variant.tier,enchant:variant.enchant})));
+
+    for(const entry of (voiceCandidateEntries(spokenSlot,qTokens))){
+      if(variant.tier && parseItemVariant(entry.item.id).tier!==variant.tier) continue;
+      const special=voiceSpecialCandidate(entry.item,spokenSlot,qNorm);
+      if(typeof special==='number' && special>0) candidates.push({item:entry.item,slot:spokenSlot,score:special,tier:variant.tier,enchant:variant.enchant});
+    }
+  }
+
+  const slotsToSearch=spokenSlot?[spokenSlot]:Array.from(voiceIndex.keys());
+  for(const slot of slotsToSearch){
+    const entries=voiceCandidateEntries(slot,qTokens);
+    for(const entry of entries){
+      const item=entry.item;
+      if(variant.tier && parseItemVariant(item.id).tier!==variant.tier) continue;
+      let best=0;
+      for(const name of entry.names){
+        const nTokens=voiceTokens(name);
+        if(!nTokens.length || !qTokens.length) continue;
+        const exactMatched=qTokens.filter(qt=>nTokens.includes(qt)).length;
+        const exactCoverage=exactMatched/qTokens.length;
+        let score=exactCoverage===1 ? 250+qTokens.length*45 : 0;
+        if(score===0){
+          let matched=0,fuzzy=0;
+          for(const qt of qTokens){
+            let ws=0;
+            for(const nt of nTokens){
+              if(nt===qt){ws=1;break;}
+              if(nt.startsWith(qt)||qt.startsWith(nt)) ws=Math.max(ws,0.92);
+              else if(Math.min(nt.length,qt.length)>=4) ws=Math.max(ws,voiceWordSimilarity(qt,nt));
+            }
+            if(ws>=0.68){matched++;fuzzy+=ws;}
+          }
+          if(matched===qTokens.length) score=120+fuzzy*35;
+        }
+        if(score>0){
+          const nq=normalizeVoiceText(name);
+          if(nq===qNorm) score+=500;
+          else if(qNorm && nq.includes(qNorm)) score+=260;
+          best=Math.max(best,score);
+        }
+      }
+      if(best>0) candidates.push({item,slot:entry.slot,score:best,tier:variant.tier,enchant:variant.enchant});
+    }
+  }
+
+  // General fuzzy fallback, but only over a narrowed candidate set. This is
+  // what lets ASR mistakes such as "marlow" -> "martlock" work without
+  // freezing the page by comparing every spoken token with every item.
+  if(spokenSlot && qNorm){
+    const fuzzy=[];
+    const entries=voiceCandidateEntries(spokenSlot,qTokens);
+    for(const entry of entries){
+      const item=entry.item;
+      if(variant.tier && parseItemVariant(item.id).tier!==variant.tier) continue;
+      let bestNameScore=0;
+      for(const name of entry.names){
+        const nameTokens=voiceQueryTokens(name);
+        if(!nameTokens.length) continue;
+        let total=0, matched=0;
+        for(const qt of qTokens){
+          let local=0;
+          for(const nt of nameTokens) local=Math.max(local,voiceWordSimilarity(qt,nt));
+          if(local>=0.60){matched++;total+=local;}
+        }
+        if(matched===qTokens.length) bestNameScore=Math.max(bestNameScore,total/qTokens.length);
+      }
+      if(bestNameScore>=0.64) fuzzy.push({item,slot:spokenSlot,score:560+bestNameScore*220,tier:variant.tier,enchant:variant.enchant});
+    }
+    candidates.push(...fuzzy);
+  }
+
+  const familyBest=new Map();
+  for(const c of candidates){
+    const key=voiceFamilyKey(c.item,c.slot);
+    const tier=parseItemVariant(c.item.id).tier||0;
+    const current=familyBest.get(key);
+    if(!current || tier>(parseItemVariant(current.item.id).tier||0) || (tier===(parseItemVariant(current.item.id).tier||0) && c.score>current.score)) familyBest.set(key,c);
+  }
+  candidates=[...familyBest.values()];
+  candidates.sort((a,b)=>{
+    const ta=parseItemVariant(a.item.id).tier||0,tb=parseItemVariant(b.item.id).tier||0;
+    if(!variant.tier && ta!==tb) return tb-ta;
+    return b.score-a.score;
+  });
+  return candidates.slice(0,12);
+}
+
+function parseVoiceBuild(transcript){
+  const parsed=[],ambiguous=[];
+  for(const rawSegment of voiceSegments(transcript)){
+    const segment=voiceCanonicalSegment(rawSegment);
+    const candidates=voiceCandidates(segment);
+    if(!candidates.length){ambiguous.push(segment);continue;}
+    const best=candidates[0],second=candidates[1];
+    const bestName=normalizeVoiceText(getName(best.item));
+    const secondName=second?normalizeVoiceText(getName(second.item)):"";
+    if(second && best.score<700 && best.score-second.score<12 && bestName!==secondName){ambiguous.push(segment);continue;}
+    const tier=best.tier||parseItemVariant(best.item.id).tier;
+    parsed.push({segment,slot:best.slot,item:best.item,tier,enchant:best.enchant||0,quality:1});
+  }
+  return {parsed,ambiguous};
+}
+
+function renderVoiceMatches(result){
+  const box=$("#voiceMatches"); if(!box)return;
+  if(!result.parsed.length && !result.ambiguous.length){box.innerHTML=`<div class="loading">${escapeHtml(t("voiceNothing"))}</div>`;return;}
+  const rows=result.parsed.map(x=>`<div class="voice-match"><span>${escapeHtml(t(SLOT_LABELS[x.slot]))}</span><strong>${escapeHtml(getName(x.item))}</strong><small>T${x.tier}${x.enchant?"."+x.enchant:""}</small></div>`).join("");
+  const bad=result.ambiguous.length?`<div class="voice-ambiguous"><strong>${escapeHtml(t("voiceAmbiguous"))}</strong><span>${escapeHtml(result.ambiguous.join(" · "))}</span></div>`:"";
+  box.innerHTML=rows+bad;
+}
+
+function setVoiceRecordingUI(active){
+  const btn=$("#startVoice");
+  const bar=$(".voice-side-launcher");
+  if(btn) btn.classList.toggle("voice-recording",!!active);
+  if(bar) bar.classList.toggle("voice-recording",!!active);
+}
+
+function startVoiceRecognition(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){$("#voiceStatus").textContent=t("voiceUnsupported");return;}
+  if(voiceRecognition){try{voiceRecognition.stop();}catch{} voiceRecognition=null;}
+  voiceShouldListen=true;
+  voiceAccumulatedTranscript=voiceAccumulatedTranscript||"";
+  voiceRecognition=new SR();
+  voiceRecognition.lang=state.lang==="es"?"es-ES":"en-US";
+  voiceRecognition.interimResults=false;
+  voiceRecognition.continuous=true;
+  voiceRecognition.maxAlternatives=3;
+  $("#voiceStatus").textContent=t("voiceStarting");
+  $("#startVoice").innerHTML=`🎙️ <span>${escapeHtml(t("startListening"))}</span>`;
+  $("#stopVoice").disabled=false;
+  voiceRecognition.onstart=()=>{setVoiceRecordingUI(true);$("#voiceStatus").textContent=t("voiceListening");};
+  voiceRecognition.onaudiostart=()=>{setVoiceRecordingUI(true);$("#voiceStatus").textContent=t("voiceAudioStart");};
+  voiceRecognition.onspeechstart=()=>{setVoiceRecordingUI(true);$("#voiceStatus").textContent=t("voiceListening");};
+  voiceRecognition.onresult=e=>{
+    let added=[];
+    for(let i=e.resultIndex||0;i<e.results.length;i++){
+      if(e.results[i].isFinal) added.push(e.results[i][0].transcript.trim());
+    }
+    if(added.length){
+      voiceAccumulatedTranscript=(voiceAccumulatedTranscript+" "+added.join(" ")).trim();
+      $("#voiceTranscript").textContent=voiceAccumulatedTranscript;
+    }
+  };
+  voiceRecognition.onnomatch=()=>{
+    if(voiceShouldListen) $("#voiceStatus").textContent=t("voiceListening");
+  };
+  voiceRecognition.onerror=e=>{
+    const messages={
+      "not-allowed":"Permiso de micrófono denegado.",
+      "audio-capture":"No se ha encontrado ningún micrófono.",
+      "no-speech":"Sin voz detectada; sigo escuchando...",
+      "network":"Error de red del reconocimiento de voz.",
+      "aborted":"Reconocimiento detenido."
+    };
+    $("#voiceStatus").textContent=messages[e.error]||`Error de voz: ${e.error}`;
+    if(e.error==="not-allowed"||e.error==="audio-capture"){
+      voiceShouldListen=false;
+      setVoiceRecordingUI(false);
+      $("#stopVoice").disabled=true;
+    }
+  };
+  voiceRecognition.onend=()=>{
+    voiceRecognition=null;
+    if(voiceShouldListen){
+      setVoiceRecordingUI(true);
+      $("#voiceStatus").textContent=t("voiceListening");
+      setTimeout(()=>{ if(voiceShouldListen) startVoiceRecognition(); },120);
+      return;
+    }
+    setVoiceRecordingUI(false);
+    $("#stopVoice").disabled=true;
+    $("#voiceStatus").textContent=voiceAccumulatedTranscript?t("voiceReadyToProcess"):t("voiceNoMatch");
+    voicePendingTranscript=voiceAccumulatedTranscript.trim();
+    $("#processVoice").disabled=!voicePendingTranscript;
+    $("#startVoice").innerHTML=`🎙️ <span>${escapeHtml(t("startListening"))}</span>`;
+  };
+  try{
+    voiceRecognition.start();
+  }catch(e){
+    $("#voiceStatus").textContent=t("voiceStartError");
+    voiceRecognition=null;
+    voiceShouldListen=false;
+    setVoiceRecordingUI(false);
+    $("#stopVoice").disabled=true;
+  }
+}
+
+function stopVoiceRecognition(){
+  voiceShouldListen=false;
+  setVoiceRecordingUI(false);
+  if(voiceRecognition){
+    try{voiceRecognition.stop();}catch{}
+  }else{
+    voicePendingTranscript=voiceAccumulatedTranscript.trim();
+    $("#voiceStatus").textContent=voicePendingTranscript?t("voiceReadyToProcess"):t("voiceNoMatch");
+    $("#processVoice").disabled=!voicePendingTranscript;
+    $("#stopVoice").disabled=true;
+  }
+}
+
+function processVoiceBuild(){
+  const transcript=voicePendingTranscript || $("#voiceTranscript")?.textContent?.trim() || "";
+  if(!transcript || transcript===t("voiceReady")) return;
+  voiceSearchRunning=true;
+  $("#processVoice").disabled=true;
+  $("#voiceStatus").textContent=t("voiceSearching");
+  setTimeout(()=>{
+    voiceResults=parseVoiceBuild(transcript);
+    renderVoiceMatches(voiceResults);
+    $("#applyVoice").disabled=!voiceResults.parsed.length;
+    voiceSearchRunning=false;
+    $("#voiceStatus").textContent=voiceResults.parsed.length?t("voiceFound"):t("voiceNoMatch");
+  },0);
+}
+
+function clearVoiceBuild(){
+  voiceShouldListen=false;
+  setVoiceRecordingUI(false);
+  if(voiceRecognition){try{voiceRecognition.stop();}catch{} voiceRecognition=null;}
+  voiceAccumulatedTranscript="";
+  voiceResults=[];
+  voicePendingTranscript="";
+  $("#voiceTranscript").textContent=t("voiceReady");
+  $("#voiceMatches").innerHTML="";
+  $("#applyVoice").disabled=true;
+  $("#processVoice").disabled=true;
+  $("#voiceStatus").textContent=t("voiceCleared");
+}
+
+function applyVoiceBuild(){
+  if(!voiceResults.length && !voiceResults.parsed?.length)return;
+  for(const x of voiceResults.parsed){
+    const id=baseIdForTier(x.item,x.tier);
+    state.build[x.slot]={baseId:parseItemVariant(id).baseId,id,name:getName(x.item),tier:x.tier,enchant:x.enchant,quality:x.quality,icon:iconUrl(id,x.enchant,x.quality)};
+  }
+  clearInvalidOffhand(); renderBuild(); $("#voiceStatus").textContent=t("voiceApplied");
+  $("#voiceBuildPanel").classList.add("hidden");
+  if(voicePreviousSelectorHidden===false || state.activeSlot) $("#selector")?.classList.remove("hidden");
+}
+
+function buildVoiceIndex(){
+  voiceIndex=new Map([["head",[]],["armor",[]],["shoes",[]],["cape",[]],["bag",[]],["potion",[]],["food",[]],["offhand",[]],["mainhand",[]]]);
+  voiceSlotCache.clear();
+  voiceWordIndex=new Map();
+  voiceWordFuzzyIndex=new Map();
+  const words=new Set();
+  const addWord=(key,entry)=>{
+    let arr=voiceWordIndex.get(key);
+    if(!arr){arr=[];voiceWordIndex.set(key,arr);}
+    arr.push(entry);
+  };
+  for(const item of state.items){
+    const slot=voiceSlotForItem(item);
+    if(!slot || !voiceIndex.has(slot)) continue;
+    const names=voiceItemNames(item);
+    const entry={item,slot,names};
+    voiceIndex.get(slot).push(entry);
+    for(const name of names){
+      for(const w of voiceQueryTokens(name)){
+        if(w.length<3) continue;
+        words.add(w);
+        addWord(`${slot}|${w}`,entry);
+        const fk=voiceFuzzyBucketKey(w);
+        let fb=voiceWordFuzzyIndex.get(fk);
+        if(!fb){fb=[];voiceWordFuzzyIndex.set(fk,fb);}
+        if(!fb.includes(w)) fb.push(w);
+        const first=voicePhoneticKey(w).slice(0,1);
+        for(let len=Math.max(3,w.length-1);len<=Math.min(12,w.length+1);len++){
+          const fk2=`${first}|${len}`;
+          let fb2=voiceWordFuzzyIndex.get(fk2);
+          if(!fb2){fb2=[];voiceWordFuzzyIndex.set(fk2,fb2);}
+          if(!fb2.includes(w)) fb2.push(w);
+        }
+      }
+    }
+  }
+  voiceAlbionWords=[...words];
+}
+
 async function loadItems(){
   $("#status").textContent = t("loadingData");
   try{
@@ -1049,6 +1701,7 @@ async function loadItems(){
     state.items = normalize(fallbackItems());
     $("#status").textContent = `${t("loadingData")} (modo demo)`;
   }
+  buildVoiceIndex();
   fillCategories();
   filter();
   applyI18n();
@@ -1097,6 +1750,31 @@ $("#newBuild").addEventListener("click",()=>{ state.build={}; $("#buildName").va
 $("#exportAll")?.addEventListener("click",exportAllData);
 $("#importAll")?.addEventListener("click",()=>$("#importFile")?.click());
 $("#importFile")?.addEventListener("change",e=>{ importAllData(e.target.files?.[0]); e.target.value=""; });
+
+let voicePreviousSelectorHidden=true;
+$("#voiceBuild")?.addEventListener("click",()=>{
+  const panel=$("#voiceBuildPanel");
+  const opening=panel.classList.contains("hidden");
+  if(opening){
+    voicePreviousSelectorHidden=$("#selector")?.classList.contains("hidden") ?? true;
+    panel.classList.remove("hidden");
+    $("#selector")?.classList.add("hidden");
+    $("#itemEditor")?.classList.add("hidden");
+  }else{
+    panel.classList.add("hidden");
+    if(!voicePreviousSelectorHidden && !state.activeSlot) $("#selector")?.classList.remove("hidden");
+    if(state.activeSlot) $("#selector")?.classList.remove("hidden");
+  }
+});
+$("#closeVoiceBuild")?.addEventListener("click",()=>{
+  $("#voiceBuildPanel").classList.add("hidden");
+  if(state.activeSlot || !voicePreviousSelectorHidden) $("#selector")?.classList.remove("hidden");
+});
+$("#startVoice")?.addEventListener("click",()=>{ if(!voiceShouldListen) startVoiceRecognition(); });
+$("#stopVoice")?.addEventListener("click",stopVoiceRecognition);
+$("#clearVoice")?.addEventListener("click",clearVoiceBuild);
+$("#processVoice")?.addEventListener("click",processVoiceBuild);
+$("#applyVoice")?.addEventListener("click",applyVoiceBuild);
 
 syncWeaponSlots();
 applyI18n();

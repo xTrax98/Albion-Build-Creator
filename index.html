@@ -65,7 +65,6 @@
           <input id="buildName" maxlength="80" data-i18n-placeholder="buildNamePlaceholder"
                  placeholder="Nombre de la build">
         </div>
-
         <div class="equipment-grid">
           <button class="slot" data-slot="bag" type="button"><span class="slot-label" data-i18n="bag">Bolsa</span><span class="slot-item"></span></button>
           <button class="slot" data-slot="head" type="button"><span class="slot-label" data-i18n="head">Cabeza</span><span class="slot-item"></span></button>
@@ -89,6 +88,28 @@
       </section>
 
       <aside class="sidebar right-sidebar">
+        <div class="voice-side-launcher">
+          <button id="voiceBuild" class="voice-button" type="button">🎙️ <span data-i18n="voiceBuild">Crear build por voz</span></button>
+          <span id="voiceStatus" class="voice-status" aria-live="polite"></span>
+        </div>
+        <section id="voiceBuildPanel" class="voice-build-panel hidden" aria-live="polite">
+          <div class="voice-build-head">
+            <div>
+              <strong data-i18n="voiceListeningTitle">Build por voz</strong>
+              <small data-i18n="voiceHelp">Di los objetos de la build en cualquier orden.</small>
+            </div>
+            <button id="closeVoiceBuild" class="ghost" type="button" data-i18n="close">Cerrar</button>
+          </div>
+          <div id="voiceTranscript" class="voice-transcript" data-i18n="voiceReady">Pulsa el micrófono y habla.</div>
+          <div id="voiceMatches" class="voice-matches"></div>
+          <div class="voice-actions">
+            <button id="startVoice" class="primary" type="button">🎙️ <span data-i18n="startListening">Escuchar</span></button>
+            <button id="stopVoice" class="ghost" type="button" disabled data-i18n="stopListening">Parar</button>
+            <button id="clearVoice" class="ghost" type="button" data-i18n="clearVoice">Limpiar</button>
+            <button id="processVoice" class="ghost" type="button" disabled data-i18n="voiceProcess">Buscar objetos</button>
+            <button id="applyVoice" class="ghost" type="button" disabled data-i18n="applyVoice">Aplicar a la build</button>
+          </div>
+        </section>
         <section class="selector" id="selector">
           <div class="selector-head">
             <div>
