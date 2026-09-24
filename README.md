@@ -1,3 +1,3 @@
-# Albion Build Creator 0.3.82 TEST
+# Albion Build Creator 0.3.83 TEST
 
-Test version: fixes item icons being slightly clipped at the bottom in the normal composition preview. Stable remains 0.3.80.
+TEST: normal composition preview equipment icons now use the same 52px full-size presentation as ZvZ and are not clipped vertically.
