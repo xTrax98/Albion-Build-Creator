@@ -181,10 +181,10 @@ function renderCompositions(){
         </div>
       </details>
     </div>`).join("");
-  box.querySelectorAll("[data-view-composition]").forEach(b=>b.addEventListener("click",()=>showCompositionPreview(b.getAttribute("data-view-composition"))));
-  box.querySelectorAll("[data-duplicate-composition]").forEach(b=>b.addEventListener("click",()=>duplicateComposition(b.getAttribute("data-duplicate-composition"))));
-  box.querySelectorAll("[data-edit-composition]").forEach(b=>b.addEventListener("click",()=>openCompositionEditor(b.getAttribute("data-edit-composition"))));
-  box.querySelectorAll("[data-delete-composition]").forEach(b=>b.addEventListener("click",()=>deleteComposition(b.getAttribute("data-delete-composition"))));
+  box.querySelectorAll("[data-view-composition]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); showCompositionPreview(b.getAttribute("data-view-composition")); }));
+  box.querySelectorAll("[data-duplicate-composition]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); duplicateComposition(b.getAttribute("data-duplicate-composition")); }));
+  box.querySelectorAll("[data-edit-composition]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); openCompositionEditor(b.getAttribute("data-edit-composition")); }));
+  box.querySelectorAll("[data-delete-composition]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); deleteComposition(b.getAttribute("data-delete-composition")); }));
 }
 
 function openCompositionEditor(id=null){
@@ -266,10 +266,10 @@ function renderZvZCompositions(){
   if(count) count.textContent = list.length;
   if(!list.length){ box.innerHTML = `<div class="library-empty"><div class="library-empty-icon">＋</div><strong>${escapeHtml(t("noCompositions"))}</strong><p>${escapeHtml(t("zvzCompositionHelp"))}</p></div>`; return; }
   box.innerHTML = list.map(c=>`<div class="composition-card"><div><strong>${escapeHtml(c.name)}</strong><small>${(c.members||[]).length} ${escapeHtml(t("players"))}</small></div><details class="action-menu"><summary class="ghost action-menu-trigger" aria-label="Más opciones">...</summary><div class="action-menu-dropdown"><button class="ghost" type="button" data-view-zvz="${escapeHtml(c.id)}">${escapeHtml(t("view"))}</button><button class="ghost" type="button" data-duplicate-zvz="${escapeHtml(c.id)}">${escapeHtml(t("duplicate"))}</button><button class="ghost" type="button" data-edit-zvz="${escapeHtml(c.id)}">${escapeHtml(t("edit"))}</button><button class="ghost danger" type="button" data-delete-zvz="${escapeHtml(c.id)}">${escapeHtml(t("delete"))}</button></div></details></div>`).join("");
-  box.querySelectorAll("[data-view-zvz]").forEach(b=>b.addEventListener("click",()=>showZvZPreview(b.getAttribute("data-view-zvz"))));
-  box.querySelectorAll("[data-duplicate-zvz]").forEach(b=>b.addEventListener("click",()=>duplicateZvZ(b.getAttribute("data-duplicate-zvz"))));
-  box.querySelectorAll("[data-edit-zvz]").forEach(b=>b.addEventListener("click",()=>openZvZEditor(b.getAttribute("data-edit-zvz"))));
-  box.querySelectorAll("[data-delete-zvz]").forEach(b=>b.addEventListener("click",()=>deleteZvZ(b.getAttribute("data-delete-zvz"))));
+  box.querySelectorAll("[data-view-zvz]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); showZvZPreview(b.getAttribute("data-view-zvz")); }));
+  box.querySelectorAll("[data-duplicate-zvz]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); duplicateZvZ(b.getAttribute("data-duplicate-zvz")); }));
+  box.querySelectorAll("[data-edit-zvz]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); openZvZEditor(b.getAttribute("data-edit-zvz")); }));
+  box.querySelectorAll("[data-delete-zvz]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); deleteZvZ(b.getAttribute("data-delete-zvz")); }));
 }
 
 function openZvZEditor(id=null){
@@ -508,19 +508,35 @@ function renderPresets(){
       </details>
     </div>`;
   }).join("");
-  box.querySelectorAll("[data-load-preset]").forEach(b=>b.addEventListener("click",()=>loadPreset(b.dataset.loadPreset)));
-  box.querySelectorAll("[data-duplicate-preset]").forEach(b=>b.addEventListener("click",()=>duplicatePreset(b.dataset.duplicatePreset)));
-  box.querySelectorAll("[data-delete-preset]").forEach(b=>b.addEventListener("click",()=>deletePreset(b.dataset.deletePreset)));
+  box.querySelectorAll("[data-load-preset]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); loadPreset(b.dataset.loadPreset); }));
+  box.querySelectorAll("[data-duplicate-preset]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); duplicatePreset(b.dataset.duplicatePreset); }));
+  box.querySelectorAll("[data-delete-preset]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); deletePreset(b.dataset.deletePreset); }));
 }
 
 
 
 function setLibraryTab(tab){
+  const activeTab=document.querySelector("[data-library-tab].active")?.dataset.libraryTab || null;
+  // Clicking the already-open section closes it with the same accordion animation.
+  if(tab===activeTab) tab=null;
   if(tab !== "compositions" && tab !== "zvz") hideCompositionPreview();
-  document.querySelectorAll("[data-library-tab]").forEach(b=>b.classList.toggle("active",b.dataset.libraryTab===tab));
-  $("#presetsList").classList.toggle("hidden",tab!=="presets");
-  $("#compositionsPanel").classList.toggle("hidden",tab!=="compositions");
-  $("#zvzPanel").classList.toggle("hidden",tab!=="zvz");
+
+  document.querySelectorAll("[data-library-tab]").forEach(b=>{
+    const isActive=b.dataset.libraryTab===tab;
+    b.classList.toggle("active",isActive);
+    b.setAttribute("aria-expanded",isActive ? "true" : "false");
+  });
+
+  [
+    ["presets",$("#presetsList")],
+    ["compositions",$("#compositionsPanel")],
+    ["zvz",$("#zvzPanel")]
+  ].forEach(([key,panel])=>{
+    if(!panel) return;
+    panel.classList.toggle("library-content-open",key===tab);
+  });
+
+  if(tab==="presets") renderPresets();
   if(tab==="compositions"){
     if(!$("#compositionList")) resetCompositionPanel();
     renderCompositions();

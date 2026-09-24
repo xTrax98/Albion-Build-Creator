@@ -29,33 +29,39 @@
           <h2 data-i18n="library">Biblioteca</h2>
           <p data-i18n="libraryHelp">Organiza tus builds y composiciones.</p>
         </div>
-        <nav class="library-menu" aria-label="Biblioteca">
-          <button class="library-tab active" data-library-tab="presets" type="button">
-            <span class="library-tab-title" data-i18n="myPresets">Mis presets</span>
-            <span class="library-tab-count" id="presetCount">0</span>
-          </button>
-          <button class="library-tab" data-library-tab="compositions" type="button">
-            <span class="library-tab-title" data-i18n="myCompositions">Mis composiciones</span>
-            <span class="library-tab-count" id="compositionCount">0</span>
-          </button>
-          <button class="library-tab" data-library-tab="zvz" type="button">
-            <span class="library-tab-title" data-i18n="myZvZCompositions">Mis composiciones ZvZ</span>
-            <span class="library-tab-count" id="zvzCount">0</span>
-          </button>
-        </nav>
+        <div class="library-menu" aria-label="Biblioteca">
+          <div class="library-section">
+            <button class="library-tab active" data-library-tab="presets" type="button" aria-expanded="true">
+              <span class="library-tab-title" data-i18n="myPresets">Mis presets</span>
+              <span class="library-tab-count" id="presetCount">0</span>
+            </button>
+            <div id="presetsList" class="library-content library-content-open"></div>
+          </div>
+          <div class="library-section">
+            <button class="library-tab" data-library-tab="compositions" type="button" aria-expanded="false">
+              <span class="library-tab-title" data-i18n="myCompositions">Mis composiciones</span>
+              <span class="library-tab-count" id="compositionCount">0</span>
+            </button>
+            <div id="compositionsPanel" class="library-content">
+              <div id="compositionList"></div>
+              <button id="newComposition" class="primary library-new" type="button" data-i18n="newComposition">Nueva composición</button>
+            </div>
+          </div>
+          <div class="library-section">
+            <button class="library-tab" data-library-tab="zvz" type="button" aria-expanded="false">
+              <span class="library-tab-title" data-i18n="myZvZCompositions">Mis composiciones ZvZ</span>
+              <span class="library-tab-count" id="zvzCount">0</span>
+            </button>
+            <div id="zvzPanel" class="library-content">
+              <div id="zvzList"></div>
+              <button id="newZvZComposition" class="primary library-new" type="button" data-i18n="newZvZComposition">Nueva composición ZvZ</button>
+            </div>
+          </div>
+        </div>
         <div class="backup-actions">
           <button id="exportAll" class="ghost" type="button" data-i18n="exportAll">Exportar todo</button>
           <button id="importAll" class="ghost" type="button" data-i18n="importAll">Importar todo</button>
           <input id="importFile" type="file" accept="application/json,.json" hidden>
-        </div>
-        <div id="presetsList" class="library-content"></div>
-        <div id="compositionsPanel" class="library-content hidden">
-          <div id="compositionList"></div>
-          <button id="newComposition" class="primary library-new" type="button" data-i18n="newComposition">Nueva composición</button>
-        </div>
-        <div id="zvzPanel" class="library-content hidden">
-          <div id="zvzList"></div>
-          <button id="newZvZComposition" class="primary library-new" type="button" data-i18n="newZvZComposition">Nueva composición ZvZ</button>
         </div>
       </aside>
 
