@@ -1,8 +1,8 @@
-# Albion Build Creator v0.4.11
+# Albion Build Creator v0.4.12
 
-Versión 0.4.11 estable.
+Versión 0.4.12 estable.
 
 ## Cambios de esta entrega
-- Corrige el arrastre manual de presets para que sus tarjetas sean reconocidas por el controlador de orden.
-- Mantiene el orden manual en composiciones normales y ZvZ.
-- Conserva compatibilidad con respaldos antiguos.
+- Permite abrir/cargar un preset haciendo clic en el cuerpo de su tarjeta.
+- Mantiene el arrastre manual para reordenar tarjetas.
+- Los botones y el menú conservan sus acciones propias.

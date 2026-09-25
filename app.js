@@ -1,4 +1,4 @@
-const APP_VERSION = "0.4.11";
+const APP_VERSION = "0.4.12";
 const APP_CHANNEL = "ESTABLE";
 
 const state = {
@@ -1162,7 +1162,7 @@ function duplicateZvZ(id){
 function installLibrarySorting(){
   if(document.documentElement.dataset.librarySortingInstalled)return;
   document.documentElement.dataset.librarySortingInstalled="true";
-  let draggedCard=null,dragBox=null,pointerId=null;
+  let draggedCard=null,dragBox=null,pointerId=null,dragMoved=false;
   const finish=()=>{
     if(!draggedCard)return;
     draggedCard.classList.remove("library-dragging");
@@ -1174,7 +1174,8 @@ function installLibrarySorting(){
     const byId=new Map(list.map(item=>[String(item.id),item]));
     const ordered=[...dragBox.querySelectorAll(".library-sort-card")].map(card=>byId.get(card.dataset.sortId)).filter(Boolean);
     save(ordered);
-    draggedCard=null;dragBox=null;pointerId=null;
+    if(dragBox.id==="presetsList" && dragMoved)draggedCard.dataset.dragJustMoved="true";
+    draggedCard=null;dragBox=null;pointerId=null;dragMoved=false;
   };
   document.addEventListener("pointerdown",event=>{
     const target=event.target;
@@ -1193,8 +1194,8 @@ function installLibrarySorting(){
     const cards=[...dragBox.querySelectorAll(".library-sort-card")].filter(card=>card!==draggedCard);
     dragBox.querySelectorAll(".library-drop-before,.library-drop-after").forEach(card=>card.classList.remove("library-drop-before","library-drop-after"));
     const target=cards.find(card=>event.clientY<card.getBoundingClientRect().top+card.getBoundingClientRect().height/2);
-    if(target){dragBox.insertBefore(draggedCard,target);target.classList.add("library-drop-before");}
-    else if(cards.length){const last=cards[cards.length-1];dragBox.insertBefore(draggedCard,last.nextSibling);last.classList.add("library-drop-after");}
+    if(target){if(draggedCard.nextElementSibling!==target)dragMoved=true;dragBox.insertBefore(draggedCard,target);target.classList.add("library-drop-before");}
+    else if(cards.length){const last=cards[cards.length-1];if(draggedCard.nextElementSibling!==last.nextElementSibling)dragMoved=true;dragBox.insertBefore(draggedCard,last.nextSibling);last.classList.add("library-drop-after");}
     const bounds=dragBox.getBoundingClientRect();
     if(event.clientY<bounds.top+32)dragBox.scrollTop-=12;
     else if(event.clientY>bounds.bottom-32)dragBox.scrollTop+=12;
@@ -1234,6 +1235,11 @@ function renderPresets(){
     </div>`;
   }).join("");
   bindBulkCheckboxes(box);
+  box.querySelectorAll(".preset-card").forEach(card=>card.addEventListener("click",event=>{
+    if(card.dataset.dragJustMoved){delete card.dataset.dragJustMoved;return;}
+    if(bulkSelectionMode || event.target.closest("button,details,.bulk-checkbox"))return;
+    loadPreset(card.dataset.presetId);
+  }));
   box.querySelectorAll("[data-load-preset]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); loadPreset(b.dataset.loadPreset); }));
   box.querySelectorAll("[data-duplicate-preset]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); duplicatePreset(b.dataset.duplicatePreset); }));
   box.querySelectorAll("[data-rename-preset]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); renamePreset(b.dataset.renamePreset); }));
