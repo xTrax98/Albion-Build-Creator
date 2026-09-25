@@ -1,4 +1,4 @@
-const APP_VERSION = "0.4.13";
+const APP_VERSION = "0.4.27";
 const APP_CHANNEL = "ESTABLE";
 
 const state = {
@@ -1405,7 +1405,7 @@ function getName(item){
 
 function normalize(raw){
   const arr = Array.isArray(raw) ? raw : (raw.items || raw.data || []);
-  return arr.map(x => ({
+  const normalized=arr.map(x => ({
     id: x.UniqueName || x.uniqueName || x.Index || x.index || x.item_id || x.id,
     name: x.LocalizedNames ? getName(x) : (x.name || x.Name || x.UniqueName || x.Index),
     names: x.LocalizedNames || x.localizedNames || {},
@@ -1413,6 +1413,19 @@ function normalize(raw){
     subcat: x.ShopSubCategory || x.shop_subcategory || x.subcategory || "",
     maxQuality: Number(x.MaxQualityLevel ?? x.max_quality_level ?? 5)
   })).filter(x => x.id);
+  // Keep only entries that can be used by one of the build's equipment slots.
+  const buildSlots=["mainhand","offhand","head","armor","shoes","bag","cape","food","potion"];
+  return normalized.filter(item=>{
+    // Cosmetic wardrobe unlocks can share equipment-like IDs, but cannot be
+    // equipped in a build. Keep real equipment even when its ID says PROTOTYPE.
+    const category=String(item.cat).trim().toLowerCase();
+    const id=String(item.id).toUpperCase();
+    const rawName=String(item.name || "").toUpperCase();
+    const cosmeticCape=/\b(?:CAPA|CAPE)\s+(?:DECORATIVA|DECORATIVE)\b/.test(rawName);
+    const cosmeticBanner=/\b(?:ESTANDARTE|BANNER)\b/.test(rawName) || /(?:^|_)BANNER(?:_|$)/.test(id);
+    if(category==="vanity" || id.startsWith("UNIQUE_UNLOCK_") || id.includes("PROTOTYPE") || rawName.includes("PROTOTYPE") || cosmeticCape || cosmeticBanner) return false;
+    return buildSlots.some(slot=>matchesSlot(item,slot));
+  });
 }
 
 function fallbackItems(){
@@ -1556,25 +1569,37 @@ function offhandCategoryKey(item){
   return null;
 }
 
+const GEAR_CATEGORY_GROUPS={
+  head:["HEAD_CLOTH","HEAD_LEATHER","HEAD_PLATE"],
+  armor:["ARMOR_CLOTH","ARMOR_LEATHER","ARMOR_PLATE"],
+  shoes:["SHOES_CLOTH","SHOES_LEATHER","SHOES_PLATE"]
+};
+const GEAR_CATEGORY_LABELS={
+  es:{HEAD_CLOTH:"Hábitos",HEAD_LEATHER:"Capuchas",HEAD_PLATE:"Cascos",ARMOR_CLOTH:"Túnicas",ARMOR_LEATHER:"Chaquetas",ARMOR_PLATE:"Armaduras",SHOES_CLOTH:"Sandalias",SHOES_LEATHER:"Zapatos",SHOES_PLATE:"Botas"},
+  en:{HEAD_CLOTH:"Cloth Headgear",HEAD_LEATHER:"Leather Headgear",HEAD_PLATE:"Plate Helmets",ARMOR_CLOTH:"Cloth Robes",ARMOR_LEATHER:"Leather Jackets",ARMOR_PLATE:"Plate Armor",SHOES_CLOTH:"Cloth Sandals",SHOES_LEATHER:"Leather Shoes",SHOES_PLATE:"Plate Boots"}
+};
+function gearCategoryKey(item){
+  const id=equipmentBaseId(item).replace(/^T\d+_/i,"").toUpperCase();
+  const match=id.match(/^(HEAD|ARMOR|SHOES)_(CLOTH|LEATHER|PLATE)(?:_|$)/);
+  return match?`${match[1]}_${match[2]}`:null;
+}
 function normalizedCategory(item){
-  if(!item) return "";
-  const slot = state.activeSlot;
-  if(slot === "mainhand"){
-    const key = weaponCategoryKey(item);
-    return key ? prettyCategory(key) : "";
+  if(!item)return "";
+  const slot=state.activeSlot;
+  if(slot==="mainhand"){
+    const key=weaponCategoryKey(item);
+    return key?prettyCategory(key):"";
   }
-  if(slot === "offhand"){
-    const key = offhandCategoryKey(item);
-    return key ? prettyCategory(key) : "";
+  if(slot==="offhand"){
+    const key=offhandCategoryKey(item);
+    return key?prettyCategory(key):"";
   }
-  // Non-weapon slots use simple, human-readable equipment families.
-  const id = equipmentBaseId(item).replace(/^T\d+_/i, "").toUpperCase();
-  const key = id.startsWith("HEAD_") ? "HEAD" : id.startsWith("ARMOR_") ? "ARMOR" : id.startsWith("SHOES_") ? "SHOES" : id.startsWith("BAG") ? "BAG" : id.startsWith("CAPE") ? "CAPE" : id.startsWith("POTION_") ? "POTION" : (id.startsWith("MEAL_") || id.startsWith("FOOD_") || id.startsWith("FISH_")) ? "FOOD" : "";
-  const labels = {
-    es:{HEAD:"Cascos",ARMOR:"Armaduras",SHOES:"Botas",BAG:"Bolsas",CAPE:"Capas",POTION:"Pociones",FOOD:"Comidas"},
-    en:{HEAD:"Helmets",ARMOR:"Armor",SHOES:"Shoes",BAG:"Bags",CAPE:"Capes",POTION:"Potions",FOOD:"Food"}
-  };
-  return labels[state.lang]?.[key] || "";
+  const gearKey=gearCategoryKey(item);
+  if(gearKey)return GEAR_CATEGORY_LABELS[state.lang]?.[gearKey]||gearKey;
+  const id=equipmentBaseId(item).replace(/^T\d+_/i,"").toUpperCase();
+  const key=id.startsWith("BAG")?"BAG":id.startsWith("CAPE")?"CAPE":id.startsWith("POTION_")?"POTION":(id.startsWith("MEAL_")||id.startsWith("FOOD_")||id.startsWith("FISH_"))?"FOOD":"";
+  const labels={es:{BAG:"Bolsas",CAPE:"Capas",POTION:"Pociones",FOOD:"Comidas"},en:{BAG:"Bags",CAPE:"Capes",POTION:"Potions",FOOD:"Food"}};
+  return labels[state.lang]?.[key]||"";
 }
 
 function equipmentBaseId(item){
@@ -1677,13 +1702,16 @@ function fillCategories(){
   const source = state.activeSlot === "offhand"
     ? state.items.filter(x=>isCompatibleOffhand(x))
     : state.items.filter(x=>matchesSlot(x,state.activeSlot));
-  const cats = [...new Set(source.map(normalizedCategory).filter(Boolean))];
+  let cats = [...new Set(source.map(normalizedCategory).filter(Boolean))];
   if(state.activeSlot === "mainhand") {
     const order = WEAPON_CATEGORY_ORDER.map(k=>prettyCategory(k));
     cats.sort((a,b)=>order.indexOf(a)-order.indexOf(b));
   } else if(state.activeSlot === "offhand") {
     const order = OFFHAND_CATEGORY_ORDER.map(k=>prettyCategory(k));
     cats.sort((a,b)=>order.indexOf(a)-order.indexOf(b));
+  } else if(GEAR_CATEGORY_GROUPS[state.activeSlot]) {
+    const order=GEAR_CATEGORY_GROUPS[state.activeSlot].map(key=>GEAR_CATEGORY_LABELS[state.lang]?.[key]||key);
+    cats=order;
   } else {
     cats.sort((a,b)=>a.localeCompare(b));
   }
@@ -1711,14 +1739,19 @@ function filter(){
     state.activeSlot === "offhand" ? isCompatibleOffhand(item) : matchesSlot(item,state.activeSlot)
   );
 
-  const seen = new Set();
-  state.filtered = source.filter(item=>{
-    const baseId = equipmentBaseId(item);
-    if(seen.has(baseId)) return false;
-    seen.add(baseId);
-
-    const name = getName(item).toLowerCase();
-    const catOk = !cat || normalizedCategory(item) === cat;
+  // Show each item family once, using its T8 entry as the representative.
+  // If a family has no T8 row in the source data, keep its highest available tier.
+  const bestByBase=new Map();
+  source.forEach(item=>{
+    // Remove tier and enchant from the family key so T4-T8 collapse to one result.
+    const baseId=String(item.id).replace(/^T\d+_/i,"").replace(/@\d+$/i,"").toUpperCase();
+    const current=bestByBase.get(baseId);
+    const tier=parseItemVariant(item.id).tier;
+    if(!current || tier>parseItemVariant(current.id).tier)bestByBase.set(baseId,item);
+  });
+  state.filtered=[...bestByBase.values()].filter(item=>{
+    const name=getName(item).toLowerCase();
+    const catOk=!cat || normalizedCategory(item)===cat;
     return catOk && (!q || name.includes(q));
   }).slice(0,100);
 
@@ -2684,7 +2717,7 @@ applyI18n();
 migrateStoredPresetIds();
 renderPresets();
 renderZvZCompositions();
-$("#selector")?.classList.add("hidden");
+$("#selector")?.classList.remove("hidden");
 $("#itemEditor")?.classList.add("hidden");
 itemsLoadPromise = loadItems().then(()=>{
   // Automatically repair legacy item IDs already stored in localStorage.

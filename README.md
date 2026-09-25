@@ -1,7 +1,25 @@
-# Albion Build Creator v0.4.13
+# Albion Build Creator v0.4.27
 
-Versión 0.4.13 estable.
+VersiÃ³n 0.4.27 estable.
 
 ## Cambios de esta entrega
-- Elimina la pantalla de inicio de sesión y abre directamente el creador.
-- Conserva las opciones de presets, composiciones, importación y orden manual.
+- Excluye del selector los cosméticos de Vanity, las capas decorativas, estandartes cosméticos y registros técnicos PROTOTYPE.\r\n- Conserva el equipo equipable aunque su identificador técnico incluya PROTOTYPE.\r\n- AÃ±ade filtros de material/familia para Cabeza, Pecho y Pies.
+- Cada selecciÃ³n limita los resultados a esa familia de objeto.
+- La lista sigue mostrando un Ãºnico resultado por familia y prioriza T8.
+
+
+- Retira el mensaje inferior «Cargando objetos...» del selector.
+
+
+
+
+
+- Integra el botón Crear build por voz dentro del selector de objetos.
+
+- Muestra el selector de objetos desde el inicio.
+
+- Sitúa el botón de voz en la esquina superior derecha de Biblioteca.
+
+- Mantiene intacto el encabezado de Biblioteca y coloca el acceso de voz como botón compacto en su esquina.
+
+- Muestra el texto del botón de voz junto al icono en Biblioteca.

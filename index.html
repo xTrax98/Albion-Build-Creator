@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Creador de builds por xTrux</title>
-  <link rel="stylesheet" href="styles.css?v=0.4.13">
+  <link rel="stylesheet" href="styles.css?v=0.4.27">
 </head>
 <body>
 
@@ -63,6 +63,10 @@
           <h2 data-i18n="library">Biblioteca</h2>
           <p data-i18n="libraryHelp">Organiza tus builds y composiciones.</p>
         </div>
+        <div class="voice-side-launcher">
+          <button id="voiceBuild" class="voice-button" type="button" aria-label="Crear build por voz" title="Crear build por voz">🎙️ <span data-i18n="voiceBuild">Crear build por voz</span></button>
+          <span id="voiceStatus" class="voice-status" aria-live="polite"></span>
+          </div>
         <div class="library-menu" aria-label="Biblioteca">
           <div class="library-section">
             <button class="library-tab active" data-library-tab="presets" type="button" aria-expanded="true">
@@ -130,10 +134,6 @@
       </section>
 
       <aside class="sidebar right-sidebar">
-        <div class="voice-side-launcher">
-          <button id="voiceBuild" class="voice-button" type="button">🎙️ <span data-i18n="voiceBuild">Crear build por voz</span></button>
-          <span id="voiceStatus" class="voice-status" aria-live="polite"></span>
-        </div>
         <section id="voiceBuildPanel" class="voice-build-panel hidden" aria-live="polite">
           <div class="voice-build-head">
             <div>
@@ -169,7 +169,6 @@
           </div>
 
           <div id="results" class="results"></div>
-          <div id="loading" class="loading" data-i18n="loading">Cargando objetos...</div>
         </section>
 
         <section class="item-editor hidden" id="itemEditor">
@@ -191,6 +190,6 @@
     </div>
   </main>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>
-  <script src="app.js?v=0.4.13"></script>
+  <script src="app.js?v=0.4.27"></script>
 </body>
 </html>
