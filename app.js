@@ -1,4 +1,4 @@
-const APP_VERSION = "0.4.6";
+const APP_VERSION = "0.4.11";
 const APP_CHANNEL = "ESTABLE";
 
 const state = {
@@ -579,7 +579,6 @@ function renderCompositions(){
       </details>
     </div>`).join("");
   bindBulkCheckboxes(box);
-  bindLibraryReordering(box,getCompositions,saveCompositions);
   box.querySelectorAll("[data-view-composition]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); showCompositionPreview(b.getAttribute("data-view-composition")); }));
   box.querySelectorAll("[data-add-zvz-from-composition]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); addCompositionToZvZ(b.getAttribute("data-add-zvz-from-composition")); }));
   box.querySelectorAll("[data-duplicate-composition]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); duplicateComposition(b.getAttribute("data-duplicate-composition")); }));
@@ -662,13 +661,46 @@ function saveCompositionEditor(){
 
 function deleteComposition(id){ if(viewedCompositionId===id) hideCompositionPreview(); saveCompositions(getCompositions().filter(x=>x.id!==id)); renderCompositions(); }
 
+function bindZvZReordering(box){
+  box._zvzSortAbort?.abort();
+  const controller=new AbortController();
+  box._zvzSortAbort=controller;
+  let dragged=null,activePointer=null;
+  const clear=()=>{
+    if(!dragged)return;
+    dragged.classList.remove("library-dragging");
+    box.querySelectorAll(".library-drop-before,.library-drop-after").forEach(card=>card.classList.remove("library-drop-before","library-drop-after"));
+    const byId=new Map(getZvZCompositions().map(item=>[String(item.id),item]));
+    saveZvZCompositions([...box.querySelectorAll(".library-sort-card")].map(card=>byId.get(card.dataset.sortId)).filter(Boolean));
+    dragged=null;activePointer=null;
+  };
+  box.querySelectorAll(".library-sort-card").forEach(card=>{
+    const handle=card.querySelector(".library-drag-handle");
+    handle?.addEventListener("pointerdown",event=>{
+      if(bulkSelectionMode || event.button!==0)return;
+      event.preventDefault();dragged=card;activePointer=event.pointerId;
+      card.classList.add("library-dragging");
+    },{signal:controller.signal});
+  });
+  document.addEventListener("pointermove",event=>{
+    if(!dragged || event.pointerId!==activePointer)return;
+    const cards=[...box.querySelectorAll(".library-sort-card")].filter(card=>card!==dragged);
+    box.querySelectorAll(".library-drop-before,.library-drop-after").forEach(card=>card.classList.remove("library-drop-before","library-drop-after"));
+    const target=cards.find(card=>event.clientY<card.getBoundingClientRect().top+card.getBoundingClientRect().height/2);
+    if(target){box.insertBefore(dragged,target);target.classList.add("library-drop-before");}
+    else if(cards.length){const last=cards[cards.length-1];box.insertBefore(dragged,last.nextSibling);last.classList.add("library-drop-after");}
+  },{capture:true,signal:controller.signal});
+  document.addEventListener("pointerup",event=>{if(event.pointerId===activePointer)clear();},{capture:true,signal:controller.signal});
+  document.addEventListener("pointercancel",event=>{if(event.pointerId===activePointer)clear();},{capture:true,signal:controller.signal});
+}
+
 function renderZvZCompositions(){
   const box = $("#zvzList"); const list = getZvZCompositions(); const count = $("#zvzCount");
   if(count) count.textContent = list.length;
   if(!list.length){ box.innerHTML = `<div class="library-empty"><div class="library-empty-icon">＋</div><strong>${escapeHtml(t("noCompositions"))}</strong><p>${escapeHtml(t("zvzCompositionHelp"))}</p></div>`; return; }
   box.innerHTML = list.map(c=>`<div class="composition-card library-sort-card ${bulkSelected.has(`zvz:${c.id}`)?"bulk-selected":""}" data-sort-id="${escapeHtml(c.id)}">${bulkCheckbox("zvz",c.id)}<div><strong>${escapeHtml(c.name)}</strong><small>${(c.members||[]).length} ${escapeHtml(t("players"))}</small></div><button class="library-drag-handle" type="button" aria-label="Arrastrar para ordenar" title="Arrastra para ordenar"></button><details class="action-menu"><summary class="ghost action-menu-trigger" aria-label="Más opciones">...</summary><div class="action-menu-dropdown"><button class="ghost" type="button" data-view-zvz="${escapeHtml(c.id)}">${escapeHtml(t("view"))}</button><button class="ghost" type="button" data-duplicate-zvz="${escapeHtml(c.id)}">${escapeHtml(t("duplicate"))}</button><button class="ghost" type="button" data-rename-zvz="${escapeHtml(c.id)}">${escapeHtml(t("rename"))}</button><button class="ghost" type="button" data-edit-zvz="${escapeHtml(c.id)}">${escapeHtml(t("edit"))}</button><button class="ghost danger" type="button" data-delete-zvz="${escapeHtml(c.id)}">${escapeHtml(t("delete"))}</button></div></details></div>`).join("");
   bindBulkCheckboxes(box);
-  bindLibraryReordering(box,getZvZCompositions,saveZvZCompositions);
+  bindZvZReordering(box);
   box.querySelectorAll("[data-view-zvz]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); showZvZPreview(b.getAttribute("data-view-zvz")); }));
   box.querySelectorAll("[data-duplicate-zvz]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); duplicateZvZ(b.getAttribute("data-duplicate-zvz")); }));
   box.querySelectorAll("[data-edit-zvz]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); openZvZEditor(b.getAttribute("data-edit-zvz")); }));
@@ -1127,55 +1159,50 @@ function duplicateZvZ(id){
   setLibraryTab("zvz");
 }
 
-function bindLibraryReordering(box,getList,saveList){
-  box._libraryDragAbort?.abort();
-  const controller=new AbortController();
-  box._libraryDragAbort=controller;
-  let draggedCard=null;
-  let activePointerId=null;
-  const finishDrag=()=>{
+function installLibrarySorting(){
+  if(document.documentElement.dataset.librarySortingInstalled)return;
+  document.documentElement.dataset.librarySortingInstalled="true";
+  let draggedCard=null,dragBox=null,pointerId=null;
+  const finish=()=>{
     if(!draggedCard)return;
     draggedCard.classList.remove("library-dragging");
-    box.querySelectorAll(".library-drop-before,.library-drop-after").forEach(item=>item.classList.remove("library-drop-before","library-drop-after"));
-    const orderedIds=[...box.querySelectorAll(".library-sort-card")].map(item=>item.dataset.sortId);
-    const itemById=new Map(getList().map(item=>[item.id,item]));
-    saveList(orderedIds.map(id=>itemById.get(id)).filter(Boolean));
-    draggedCard=null;
-    activePointerId=null;
+    dragBox.querySelectorAll(".library-drop-before,.library-drop-after").forEach(card=>card.classList.remove("library-drop-before","library-drop-after"));
+    let list,save;
+    if(dragBox.id==="presetsList"){list=getPresets();save=savePresets;}
+    else if(dragBox.id==="compositionList"){list=getCompositions();save=saveCompositions;}
+    else{list=getZvZCompositions();save=saveZvZCompositions;}
+    const byId=new Map(list.map(item=>[String(item.id),item]));
+    const ordered=[...dragBox.querySelectorAll(".library-sort-card")].map(card=>byId.get(card.dataset.sortId)).filter(Boolean);
+    save(ordered);
+    draggedCard=null;dragBox=null;pointerId=null;
   };
-  box.querySelectorAll(".library-sort-card").forEach(card=>{
-    const handle=card.querySelector(".library-drag-handle");
-    if(!handle)return;
-    handle.addEventListener("pointerdown",event=>{
-      if(bulkSelectionMode || event.button!==0)return;
-      event.preventDefault();
-      draggedCard=card;
-      activePointerId=event.pointerId;
-      card.classList.add("library-dragging");
-    },{signal:controller.signal});
-  });
+  document.addEventListener("pointerdown",event=>{
+    const target=event.target;
+    const card=target?.closest?.(".library-sort-card");
+    if(!card || bulkSelectionMode || event.button!==0)return;
+    const handle=target.closest(".library-drag-handle");
+    if(!handle && target.closest("button,summary,a,input,select,.bulk-checkbox"))return;
+    const box=card.closest("#presetsList,#compositionList,#zvzList");
+    if(!box || box.id==="zvzList")return;
+    event.preventDefault();
+    draggedCard=card;dragBox=box;pointerId=event.pointerId;
+    card.classList.add("library-dragging");
+  },true);
   document.addEventListener("pointermove",event=>{
-    if(!draggedCard || event.pointerId!==activePointerId)return;
-    const cards=[...box.querySelectorAll(".library-sort-card")].filter(card=>card!==draggedCard);
-    const target=cards.find(card=>{
-      const rect=card.getBoundingClientRect();
-      return event.clientX>=rect.left && event.clientX<=rect.right && event.clientY>=rect.top && event.clientY<=rect.bottom;
-    });
-    box.querySelectorAll(".library-drop-before,.library-drop-after").forEach(item=>item.classList.remove("library-drop-before","library-drop-after"));
-    if(target){
-      const rect=target.getBoundingClientRect();
-      const before=event.clientY<rect.top+rect.height/2;
-      box.insertBefore(draggedCard,before?target:target.nextSibling);
-      target.classList.add(before?"library-drop-before":"library-drop-after");
-    }
-  },{capture:true,signal:controller.signal});
-  document.addEventListener("pointerup",event=>{
-    if(event.pointerId===activePointerId)finishDrag();
-  },{capture:true,signal:controller.signal});
-  document.addEventListener("pointercancel",event=>{
-    if(event.pointerId===activePointerId)finishDrag();
-  },{capture:true,signal:controller.signal});
+    if(!draggedCard || event.pointerId!==pointerId)return;
+    const cards=[...dragBox.querySelectorAll(".library-sort-card")].filter(card=>card!==draggedCard);
+    dragBox.querySelectorAll(".library-drop-before,.library-drop-after").forEach(card=>card.classList.remove("library-drop-before","library-drop-after"));
+    const target=cards.find(card=>event.clientY<card.getBoundingClientRect().top+card.getBoundingClientRect().height/2);
+    if(target){dragBox.insertBefore(draggedCard,target);target.classList.add("library-drop-before");}
+    else if(cards.length){const last=cards[cards.length-1];dragBox.insertBefore(draggedCard,last.nextSibling);last.classList.add("library-drop-after");}
+    const bounds=dragBox.getBoundingClientRect();
+    if(event.clientY<bounds.top+32)dragBox.scrollTop-=12;
+    else if(event.clientY>bounds.bottom-32)dragBox.scrollTop+=12;
+  },true);
+  document.addEventListener("pointerup",event=>{if(event.pointerId===pointerId)finish();},true);
+  document.addEventListener("pointercancel",event=>{if(event.pointerId===pointerId)finish();},true);
 }
+installLibrarySorting();
 function renderPresets(){
   const box = $("#presetsList");
   const presets = getPresets();
@@ -1191,7 +1218,7 @@ function renderPresets(){
   }
   box.innerHTML = presets.map(p=>{
     const count = Object.values(p.build || {}).filter(Boolean).length;
-    return `<div class="preset-card ${bulkSelected.has(`preset:${p.id}`)?"bulk-selected":""}" data-preset-id="${escapeHtml(p.id)}" data-sort-id="${escapeHtml(p.id)}">
+    return `<div class="preset-card library-sort-card ${bulkSelected.has(`preset:${p.id}`)?"bulk-selected":""}" data-preset-id="${escapeHtml(p.id)}" data-sort-id="${escapeHtml(p.id)}">
       ${bulkCheckbox("preset",p.id)}
       <div><strong>${escapeHtml(p.name)}</strong><small>${count}/9 slots</small></div>
       <button class="library-drag-handle preset-drag-handle" type="button" aria-label="Arrastrar para ordenar" title="Arrastra para ordenar"></button>
@@ -1207,7 +1234,6 @@ function renderPresets(){
     </div>`;
   }).join("");
   bindBulkCheckboxes(box);
-  bindLibraryReordering(box,getPresets,savePresets);
   box.querySelectorAll("[data-load-preset]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); loadPreset(b.dataset.loadPreset); }));
   box.querySelectorAll("[data-duplicate-preset]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); duplicatePreset(b.dataset.duplicatePreset); }));
   box.querySelectorAll("[data-rename-preset]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); renamePreset(b.dataset.renamePreset); }));
