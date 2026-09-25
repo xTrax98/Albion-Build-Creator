@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Creador de builds por xTrux</title>
-  <link rel="stylesheet" href="styles.css?v=0.3.132-test14">
+  <link rel="stylesheet" href="styles.css?v=0.4.5">
 </head>
 <body>
   <section id="fakeLogin" class="fake-login" aria-label="Inicio de sesión">
@@ -92,7 +92,7 @@
               <span class="library-tab-count" id="presetCount">0</span>
             </button>
             <div id="presetsList" class="library-content library-content-open"></div>
-            <button id="deleteAllPresets" class="ghost danger library-new" type="button" data-i18n="clearAllPresets">🗑️ Borrar todos los presets</button>
+            
           </div>
           <div class="library-section">
             <button class="library-tab" data-library-tab="compositions" type="button" aria-expanded="false">
@@ -117,6 +117,7 @@
         </div>
         <div class="backup-actions">
           <button id="exportAll" class="ghost" type="button" data-i18n="exportAll">Exportar todo</button>
+          <button id="bulkManage" class="ghost" type="button" data-i18n="bulkManage">🗑️ Eliminar</button>
           <button id="importAll" class="ghost" type="button" data-i18n="importAll">Importar todo</button>
           <input id="importFile" type="file" accept="application/json,.json" hidden>
         </div>
@@ -212,6 +213,6 @@
     </div>
   </main>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>
-  <script src="app.js?v=0.3.132-test14"></script>
+  <script src="app.js?v=0.4.5"></script>
 </body>
 </html>

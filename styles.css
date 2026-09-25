@@ -422,9 +422,9 @@ h1{font-size:28px;letter-spacing:-.02em}
 
 
 /* 0.3.28: backup / restore controls */
-.backup-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:10px 0 14px}
+.backup-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin:10px 0 14px}
 .backup-actions .ghost{font-size:12px;padding:9px 8px;white-space:nowrap}
-@media(max-width:680px){.backup-actions{grid-template-columns:1fr 1fr}}
+@media(max-width:680px){.backup-actions{grid-template-columns:1fr 1fr 1fr}}
 
 
 /* 0.3.29: wider library + compact cards with ellipsis */
@@ -1429,3 +1429,122 @@ button,.ghost,.library-tab,.slot,.result{transition:border-color .15s,background
 
 /* TEST 0.3.124 - item ID diagnostics */
 .debug-ids-button{white-space:nowrap}.item-debug-card{width:min(920px,92vw);max-height:88vh;overflow:auto}.item-debug-help{margin:0 0 14px;opacity:.82}.item-debug-body{display:grid;gap:10px;max-height:58vh;overflow:auto}.item-debug-row{padding:12px 14px;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:rgba(0,0,0,.22);font-size:13px;line-height:1.5}.item-debug-row.found{border-color:rgba(100,200,120,.35)}.item-debug-row.not-found{border-color:rgba(230,90,70,.55);background:rgba(90,20,20,.18)}.item-debug-main{display:flex;justify-content:space-between;gap:12px;margin-bottom:6px}.item-debug-row code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;word-break:break-all}.item-debug-status{font-weight:800}
+
+/* 0.3.133 TEST 15: global library selection mode. */
+.preset-card,.composition-card{position:relative;}
+.bulk-checkbox{display:none;position:absolute;left:10px;top:50%;transform:translateY(-50%);width:22px;height:22px;z-index:3;cursor:pointer;align-items:center;justify-content:center;}
+.bulk-checkbox input{position:absolute;opacity:0;pointer-events:none;}
+.bulk-checkbox span{display:block;width:18px;height:18px;border:1px solid #666;border-radius:5px;background:#0d0f12;box-shadow:inset 0 0 0 1px rgba(255,255,255,.03);}
+.bulk-checkbox input:checked + span{border-color:var(--accent);background:var(--accent);box-shadow:inset 0 0 0 4px #111419;}
+.bulk-selection-mode .bulk-checkbox{display:flex;}
+/* 0.4.3: reserve space for the selection checkbox on EVERY card. */
+.bulk-selection-mode .preset-card > div:first-of-type,
+.bulk-selection-mode .composition-card > div:first-of-type{
+  padding-left:30px;
+}
+/* Selection mode: the selected card is brought to the front so its checkbox and border are never covered by the next row. */
+.bulk-selection-mode .preset-card,.bulk-selection-mode .composition-card{z-index:1;}
+.bulk-selection-mode .bulk-selected{z-index:10;position:relative;}
+.bulk-selected{border-color:var(--accent) !important;box-shadow:0 0 0 1px rgba(245,169,0,.25), inset 3px 0 0 var(--accent);}
+#bulkManage.danger{color:#ffb1b1;border-color:#b85a5a;}
+@media(max-width:680px){.bulk-checkbox{top:16px;transform:none}.bulk-selection-mode .preset-card > div:first-of-type,.bulk-selection-mode .composition-card > div:first-of-type{padding-left:30px;}}
+/* 0.4.3 TEST fix: keep preset/composition names clear of the bulk checkbox. */
+.bulk-selection-mode .preset-card > div:first-of-type,
+.bulk-selection-mode .composition-card > div:first-of-type{
+  padding-left:42px;
+  min-width:0;
+}
+@media(max-width:680px){
+  .bulk-selection-mode .preset-card > div:first-of-type,
+  .bulk-selection-mode .composition-card > div:first-of-type{
+    padding-left:42px;
+  }
+}
+
+/* 0.4.3 TEST: keep six preset cards visible, then scroll inside the list. */
+#presetsList.library-content-open{
+  max-height:424px;
+  overflow-y:auto;
+  overflow-x:hidden;
+  overscroll-behavior:contain;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(245,169,0,.72) #111419;
+  scrollbar-gutter:stable;
+}
+#presetsList.library-content-open::-webkit-scrollbar{width:9px}
+#presetsList.library-content-open::-webkit-scrollbar-track{
+  background:#111419;
+  border:1px solid var(--border);
+  border-radius:999px;
+}
+#presetsList.library-content-open::-webkit-scrollbar-thumb{
+  background:linear-gradient(180deg,#f5a900,#c98500);
+  border:2px solid #111419;
+  border-radius:999px;
+}
+#presetsList.library-content-open::-webkit-scrollbar-thumb:hover{
+  background:linear-gradient(180deg,#ffc247,#e39a00);
+}
+
+/* 0.4.3 TEST: manual preset ordering handle and drop feedback. */
+#presetsList .preset-card{
+  grid-template-columns:minmax(0,1fr) auto auto;
+  transition:border-color .16s ease,background .16s ease,opacity .16s ease,transform .16s ease;
+}
+.preset-drag-handle{
+  display:grid;
+  place-items:center;
+  width:30px;
+  height:34px;
+  padding:0;
+  border:1px solid transparent;
+  border-radius:8px;
+  background:transparent;
+  color:var(--muted);
+  font-size:19px;
+  line-height:1;
+  cursor:grab;
+  touch-action:none;
+  user-select:none;
+}
+.preset-drag-handle:hover,.preset-drag-handle:focus-visible{
+  color:var(--accent);
+  border-color:var(--border);
+  background:var(--panel2);
+  outline:none;
+}
+.preset-drag-handle:active{cursor:grabbing}
+.preset-card.preset-dragging{opacity:.42;transform:scale(.985)}
+.preset-card.preset-drop-before{box-shadow:inset 0 3px 0 var(--accent)}
+.preset-card.preset-drop-after{box-shadow:inset 0 -3px 0 var(--accent)}
+.bulk-selection-mode #presetsList .preset-drag-handle{visibility:hidden;pointer-events:none}
+@media(max-width:680px){#presetsList .preset-card{grid-template-columns:minmax(0,1fr) auto auto}}
+.preset-drag-handle::before{
+  content:"";
+  width:3px;
+  height:3px;
+  border-radius:50%;
+  background:currentColor;
+  box-shadow:0 6px 0 currentColor,0 12px 0 currentColor,6px 0 0 currentColor,6px 6px 0 currentColor,6px 12px 0 currentColor;
+}
+
+/* Shared manual ordering controls for presets and both composition lists. */
+#compositionList .composition-card,#zvzList .composition-card{grid-template-columns:minmax(0,1fr) auto auto}
+.library-drag-handle{
+  display:grid;place-items:center;width:30px;height:34px;padding:0;
+  border:1px solid transparent;border-radius:8px;background:transparent;
+  color:var(--muted);cursor:grab;touch-action:none;user-select:none
+}
+.library-drag-handle:hover,.library-drag-handle:focus-visible{
+  color:var(--accent);border-color:var(--border);background:var(--panel2);outline:none
+}
+.library-drag-handle:active{cursor:grabbing}
+.library-drag-handle::before{
+  content:"";width:3px;height:3px;border-radius:50%;background:currentColor;
+  box-shadow:0 6px 0 currentColor,0 12px 0 currentColor,6px 0 0 currentColor,6px 6px 0 currentColor,6px 12px 0 currentColor
+}
+.library-sort-card.library-dragging{opacity:.42;transform:scale(.985)}
+.library-sort-card.library-drop-before{box-shadow:inset 0 3px 0 var(--accent)}
+.library-sort-card.library-drop-after{box-shadow:inset 0 -3px 0 var(--accent)}
+.bulk-selection-mode .library-drag-handle{visibility:hidden;pointer-events:none}
+@media(max-width:680px){#compositionList .composition-card,#zvzList .composition-card{grid-template-columns:minmax(0,1fr) auto auto}}

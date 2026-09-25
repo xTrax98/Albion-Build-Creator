@@ -1,3 +1,6 @@
+const APP_VERSION = "0.4.5";
+const APP_CHANNEL = "ESTABLE";
+
 const state = {
   lang: "es",
   activeSlot: null,
@@ -9,10 +12,12 @@ const state = {
 
 // TEST 0.3.124: diagnostic information for imported item IDs.
 let importDebugLog = [];
+let bulkSelectionMode = false;
+const bulkSelected = new Set();
 
 const I18N = {
   es: {
-    title:"Creador de builds por xTrux", subtitle:"Creador de builds para Albion Online",
+    title:"Creador de builds por xTrux", subtitle:`Creador de builds para Albion Online v.${APP_VERSION} · ${APP_CHANNEL}`,
     buildNamePlaceholder:"Nombre de la build", bag:"Bolsa", head:"Cabeza", cape:"Capa",
     weapon:"Arma", armor:"Pecho", offhand:"Secundaria", potion:"Poción", shoes:"Botas", food:"Comida",
     selectWeapon:"Seleccionar objeto", selectorHelp:"Busca por nombre o filtra por categoría.", offhandCompatibility:"Con un arma de una mano puedes elegir cualquier secundaria válida.",
@@ -22,7 +27,7 @@ const I18N = {
     noPresets:"Todavía no hay presets guardados.", noCompositions:"Todavía no hay composiciones.", compositionsHelp:"Organiza presets por rol.",
     newComposition:"Nueva composición", newZvZComposition:"Nueva composición ZvZ", compositionName:"Nombre de la composición", player:"Jugador", role:"Rol", preset:"Preset", addMember:"Añadir miembro", saveComposition:"Guardar composición", cancel:"Cancelar",
     compositionSaved:"Composición guardada: ", presetsCount:"presets", edit:"Editar", view:"Ver", backToCreator:"Volver al creador", saveNames:"Guardar nombres", screenshotDiscord:"📸 Crear imagen para Discord", screenshotWorking:"Generando imagen...", screenshotDone:"Imagen creada.", screenshotError:"No se pudo crear la imagen.", zvzNamePlaceholder:"Nombre del jugador", zvzPreset:"Preset", zvzCompositionHelp:"Selecciona presets para tu composición ZvZ. Los nombres se ponen desde Ver.", compositionPreview:"Vista previa de la composición", players:"jugadores",
-    load:"Cargar", duplicate:"Duplicar", rename:"Cambiar nombre", delete:"Eliminar", clearAllPresets:"🗑️ Borrar todos los presets", clearAllPresetsConfirm:"¿Seguro que quieres borrar TODOS los presets? Esta acción no se puede deshacer.", saved:"Preset guardado: ",
+    load:"Cargar", duplicate:"Duplicar", rename:"Cambiar nombre", delete:"Eliminar", addToZvZ:"Añadir a ZvZ", bulkManage:"🗑️ Eliminar", bulkDelete:"🗑️ Borrar seleccionados", bulkCancel:"✕ Salir", bulkDeleteConfirm:"¿Borrar los elementos seleccionados? Esta acción no se puede deshacer.", saved:"Preset guardado: ",
     voiceBuild:"Crear build por voz", voiceListeningTitle:"Build por voz", voiceHelp:"Di los objetos de la build en cualquier orden.", voiceReady:"Pulsa el micrófono y habla.", startListening:"Escuchar", stopListening:"Parar", applyVoice:"Aplicar a la build", voiceUnsupported:"Tu navegador no admite reconocimiento de voz.", voiceListening:"Escuchando...", voiceNothing:"No he entendido ningún objeto.", voiceFound:"He encontrado:", voiceAmbiguous:"No he podido identificar con seguridad:", voiceApplied:"Build aplicada desde voz.", voiceStarting:"Activando micrófono...", voiceNoMatch:"No he detectado una frase clara. Prueba a hablar más cerca del micrófono.", voiceAudioStart:"Micrófono activo. Habla ahora.", voiceStartError:"No se pudo iniciar el reconocimiento.", clearVoice:"Limpiar", voiceSearching:"Buscando objetos...", voiceCleared:"Texto de voz limpiado.", voiceProcess:"Buscar objetos", voiceReadyToProcess:"Texto capturado. Pulsa Buscar objetos.",
     allCategories:"Todas las categorías", loading:"Cargando objetos...", tier:"Tier",
     enchantment:"Encantamiento", quality:"Calidad", add:"Añadir al build",
@@ -30,7 +35,7 @@ const I18N = {
     noResults:"No se han encontrado objetos.", selected:"Seleccionado: ", twoHanded:"Arma a dos manos", offhandNeedsWeapon:"Selecciona primero un arma de una mano.", offhandLocked:"La secundaria no está disponible con esta arma.", debugIds:"🔍 Ver IDs", debugTitle:"Diagnóstico de IDs de objetos", debugEmpty:"Todavía no hay datos de diagnóstico. Importa un respaldo y vuelve a abrirlo.", debugClose:"Cerrar", debugSource:"ID del respaldo", debugResolved:"ID que está usando la app", debugStatus:"Estado", debugFound:"ENCONTRADO", debugNotFound:"NO ENCONTRADO", debugName:"Nombre"
   },
   en: {
-    title:"Build Creator by xTrux", subtitle:"Albion Online build creator",
+    title:"Build Creator by xTrux", subtitle:`Albion Online build creator v.${APP_VERSION} · ${APP_CHANNEL}`,
     buildNamePlaceholder:"Build name", bag:"Bag", head:"Head", cape:"Cape",
     weapon:"Weapon", armor:"Armor", offhand:"Off-hand", potion:"Potion", shoes:"Shoes", food:"Food",
     selectWeapon:"Select item", selectorHelp:"Search by name or filter by category.", offhandCompatibility:"With a one-handed weapon you can choose any valid off-hand.",
@@ -40,7 +45,7 @@ const I18N = {
     noPresets:"No saved presets yet.", noCompositions:"No compositions yet.", compositionsHelp:"Organize presets by role.",
     newComposition:"New composition", newZvZComposition:"New ZvZ composition", compositionName:"Composition name", player:"Player", role:"Role", preset:"Preset", addMember:"Add member", saveComposition:"Save composition", cancel:"Cancel",
     compositionSaved:"Composition saved: ", presetsCount:"presets", edit:"Edit", view:"View", backToCreator:"Back to creator", saveNames:"Save names", screenshotDiscord:"📸 Create image for Discord", screenshotWorking:"Generating image...", screenshotDone:"Image created.", screenshotError:"Could not create the image.", zvzNamePlaceholder:"Player name", zvzPreset:"Preset", zvzCompositionHelp:"Select presets for your ZvZ composition. Names are entered from View.", compositionPreview:"Composition preview", players:"players",
-    load:"Load", duplicate:"Duplicate", rename:"Rename", delete:"Delete", clearAllPresets:"🗑️ Delete all presets", clearAllPresetsConfirm:"Are you sure you want to delete ALL presets? This cannot be undone.", saved:"Preset saved: ",
+    load:"Load", duplicate:"Duplicate", rename:"Rename", delete:"Delete", addToZvZ:"Add to ZvZ", bulkManage:"🗑️ Delete", bulkDelete:"🗑️ Delete selected", bulkCancel:"✕ Exit", bulkDeleteConfirm:"Delete the selected items? This cannot be undone.", saved:"Preset saved: ",
     voiceBuild:"Create build by voice", voiceListeningTitle:"Build by voice", voiceHelp:"Say the build items in any order.", voiceReady:"Press the microphone and speak.", startListening:"Listen", stopListening:"Stop", applyVoice:"Apply to build", voiceUnsupported:"Your browser does not support speech recognition.", voiceListening:"Listening...", voiceNothing:"I could not understand any item.", voiceFound:"Found:", voiceAmbiguous:"I could not identify with confidence:", voiceApplied:"Build applied from voice.", voiceStarting:"Activating microphone...", voiceNoMatch:"I did not detect a clear phrase. Try speaking closer to the microphone.", voiceAudioStart:"Microphone active. Speak now.", voiceStartError:"Could not start speech recognition.", clearVoice:"Clear", voiceSearching:"Searching items...", voiceCleared:"Voice text cleared.", voiceProcess:"Find objects", voiceReadyToProcess:"Text captured. Press Find objects.",
     allCategories:"All categories", loading:"Loading items...", tier:"Tier",
     enchantment:"Enchantment", quality:"Quality", add:"Add to build",
@@ -472,6 +477,69 @@ let editingZvZCompositionId = null;
 let viewedCompositionId = null;
 let viewedZvZCompositionId = null;
 
+function bulkCheckbox(type,id){
+  if(!bulkSelectionMode) return "";
+  const key=`${type}:${id}`;
+  const checked=bulkSelected.has(key) ? " checked" : "";
+  return `<label class="bulk-checkbox" title="Seleccionar"><input type="checkbox" data-bulk-select="${escapeHtml(key)}"${checked}><span></span></label>`;
+}
+function bindBulkCheckboxes(root){
+  root?.querySelectorAll("[data-bulk-select]").forEach(input=>input.addEventListener("change",()=>{
+    const key=input.getAttribute("data-bulk-select");
+    if(input.checked) bulkSelected.add(key); else bulkSelected.delete(key);
+    renderBulkButton();
+    input.closest(".preset-card,.composition-card")?.classList.toggle("bulk-selected",input.checked);
+  }));
+}
+function renderBulkButton(){
+  const btn=$("#bulkManage"); if(!btn) return;
+  if(!bulkSelectionMode){btn.textContent=t("bulkManage");btn.classList.remove("danger");return;}
+  btn.textContent=bulkSelected.size ? `${t("bulkDelete")} (${bulkSelected.size})` : t("bulkCancel");
+  btn.classList.toggle("danger",bulkSelected.size>0);
+}
+function enterBulkSelection(){bulkSelectionMode=true;bulkSelected.clear();document.body.classList.add("bulk-selection-mode");renderBulkButton();renderPresets();renderCompositions();renderZvZCompositions();}
+function exitBulkSelection(){bulkSelectionMode=false;bulkSelected.clear();document.body.classList.remove("bulk-selection-mode");renderBulkButton();renderPresets();renderCompositions();renderZvZCompositions();}
+function deleteSelectedLibraryItems(){
+  if(!bulkSelected.size){exitBulkSelection();return;}
+  if(!window.confirm(t("bulkDeleteConfirm"))) return;
+
+  const deletedPresetIds = new Set(
+    getPresets()
+      .filter(x=>bulkSelected.has(`preset:${x.id}`))
+      .map(x=>x.id)
+  );
+
+  savePresets(getPresets().filter(x=>!bulkSelected.has(`preset:${x.id}`)));
+  saveCompositions(getCompositions().filter(x=>!bulkSelected.has(`composition:${x.id}`)).map(composition=>({
+    ...composition,
+    members:(composition.members||[]).filter(member=>!deletedPresetIds.has(member.presetId))
+  })));
+  saveZvZCompositions(getZvZCompositions().filter(x=>!bulkSelected.has(`zvz:${x.id}`)).map(composition=>({
+    ...composition,
+    members:(composition.members||[]).filter(member=>!deletedPresetIds.has(member.presetId))
+  })));
+
+  if(deletedPresetIds.has(state.activePresetId)){
+    const remaining = getPresets();
+    const next = remaining[0] || null;
+    if(next) loadPreset(next.id);
+    else state.activePresetId = null;
+  }
+
+  hideCompositionPreview();
+  exitBulkSelection();
+}
+function handleBulkButton(){if(!bulkSelectionMode){enterBulkSelection();return;}if(bulkSelected.size)deleteSelectedLibraryItems();else exitBulkSelection();}
+function addCompositionToZvZ(id){
+  const composition=getCompositions().find(x=>x.id===id); if(!composition)return;
+  const list=getZvZCompositions();
+  const copy={id:makeCopyId("zvz"),name:composition.name,createdAt:new Date().toISOString(),members:(composition.members||[]).map(m=>({id:makeCopyId("zvz-member"),presetId:m.presetId,displayName:""}))};
+  list.unshift(copy);saveZvZCompositions(list.slice(0,50));
+  bulkSelected.delete(`composition:${id}`);
+  setLibraryTab("zvz");renderZvZCompositions();
+  $("#status").textContent=`${t("compositionSaved")}${copy.name}`;
+}
+
 function renderCompositions(){
   const box = $("#compositionList");
   const compositions = getCompositions();
@@ -482,12 +550,15 @@ function renderCompositions(){
     return;
   }
   box.innerHTML = compositions.map(c=>`
-    <div class="composition-card">
+    <div class="composition-card library-sort-card ${bulkSelected.has(`composition:${c.id}`)?"bulk-selected":""}" data-sort-id="${escapeHtml(c.id)}">
+      ${bulkCheckbox("composition",c.id)}
       <div><strong>${escapeHtml(c.name)}</strong><small>${(c.members||[]).length} ${escapeHtml(t("presetsCount"))}</small></div>
+      <button class="library-drag-handle" type="button" aria-label="Arrastrar para ordenar" title="Arrastra para ordenar"></button>
       <details class="action-menu">
         <summary class="ghost action-menu-trigger" aria-label="Más opciones">...</summary>
         <div class="action-menu-dropdown">
           <button class="ghost" type="button" data-view-composition="${escapeHtml(c.id)}">${escapeHtml(t("view"))}</button>
+          <button class="ghost" type="button" data-add-zvz-from-composition="${escapeHtml(c.id)}">${escapeHtml(t("addToZvZ"))}</button>
           <button class="ghost" type="button" data-duplicate-composition="${escapeHtml(c.id)}">${escapeHtml(t("duplicate"))}</button>
           <button class="ghost" type="button" data-rename-composition="${escapeHtml(c.id)}">${escapeHtml(t("rename"))}</button>
           <button class="ghost" type="button" data-edit-composition="${escapeHtml(c.id)}">${escapeHtml(t("edit"))}</button>
@@ -495,7 +566,10 @@ function renderCompositions(){
         </div>
       </details>
     </div>`).join("");
+  bindBulkCheckboxes(box);
+  bindLibraryReordering(box,getCompositions,saveCompositions);
   box.querySelectorAll("[data-view-composition]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); showCompositionPreview(b.getAttribute("data-view-composition")); }));
+  box.querySelectorAll("[data-add-zvz-from-composition]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); addCompositionToZvZ(b.getAttribute("data-add-zvz-from-composition")); }));
   box.querySelectorAll("[data-duplicate-composition]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); duplicateComposition(b.getAttribute("data-duplicate-composition")); }));
   box.querySelectorAll("[data-edit-composition]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); openCompositionEditor(b.getAttribute("data-edit-composition")); }));
   box.querySelectorAll("[data-rename-composition]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); renameComposition(b.dataset.renameComposition); }));
@@ -580,7 +654,9 @@ function renderZvZCompositions(){
   const box = $("#zvzList"); const list = getZvZCompositions(); const count = $("#zvzCount");
   if(count) count.textContent = list.length;
   if(!list.length){ box.innerHTML = `<div class="library-empty"><div class="library-empty-icon">＋</div><strong>${escapeHtml(t("noCompositions"))}</strong><p>${escapeHtml(t("zvzCompositionHelp"))}</p></div>`; return; }
-  box.innerHTML = list.map(c=>`<div class="composition-card"><div><strong>${escapeHtml(c.name)}</strong><small>${(c.members||[]).length} ${escapeHtml(t("players"))}</small></div><details class="action-menu"><summary class="ghost action-menu-trigger" aria-label="Más opciones">...</summary><div class="action-menu-dropdown"><button class="ghost" type="button" data-view-zvz="${escapeHtml(c.id)}">${escapeHtml(t("view"))}</button><button class="ghost" type="button" data-duplicate-zvz="${escapeHtml(c.id)}">${escapeHtml(t("duplicate"))}</button><button class="ghost" type="button" data-rename-zvz="${escapeHtml(c.id)}">${escapeHtml(t("rename"))}</button><button class="ghost" type="button" data-edit-zvz="${escapeHtml(c.id)}">${escapeHtml(t("edit"))}</button><button class="ghost danger" type="button" data-delete-zvz="${escapeHtml(c.id)}">${escapeHtml(t("delete"))}</button></div></details></div>`).join("");
+  box.innerHTML = list.map(c=>`<div class="composition-card library-sort-card ${bulkSelected.has(`zvz:${c.id}`)?"bulk-selected":""}" data-sort-id="${escapeHtml(c.id)}">${bulkCheckbox("zvz",c.id)}<div><strong>${escapeHtml(c.name)}</strong><small>${(c.members||[]).length} ${escapeHtml(t("players"))}</small></div><button class="library-drag-handle" type="button" aria-label="Arrastrar para ordenar" title="Arrastra para ordenar"></button><details class="action-menu"><summary class="ghost action-menu-trigger" aria-label="Más opciones">...</summary><div class="action-menu-dropdown"><button class="ghost" type="button" data-view-zvz="${escapeHtml(c.id)}">${escapeHtml(t("view"))}</button><button class="ghost" type="button" data-duplicate-zvz="${escapeHtml(c.id)}">${escapeHtml(t("duplicate"))}</button><button class="ghost" type="button" data-rename-zvz="${escapeHtml(c.id)}">${escapeHtml(t("rename"))}</button><button class="ghost" type="button" data-edit-zvz="${escapeHtml(c.id)}">${escapeHtml(t("edit"))}</button><button class="ghost danger" type="button" data-delete-zvz="${escapeHtml(c.id)}">${escapeHtml(t("delete"))}</button></div></details></div>`).join("");
+  bindBulkCheckboxes(box);
+  bindLibraryReordering(box,getZvZCompositions,saveZvZCompositions);
   box.querySelectorAll("[data-view-zvz]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); showZvZPreview(b.getAttribute("data-view-zvz")); }));
   box.querySelectorAll("[data-duplicate-zvz]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); duplicateZvZ(b.getAttribute("data-duplicate-zvz")); }));
   box.querySelectorAll("[data-edit-zvz]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); openZvZEditor(b.getAttribute("data-edit-zvz")); }));
@@ -870,6 +946,7 @@ function saveCurrentPreset(){
   };
   presets.unshift(preset);
   savePresets(presets.slice(0,50));
+  state.activePresetId = preset.id;
   renderPresets();
   $("#status").textContent = `${t("saved")}${name}`;
 }
@@ -885,6 +962,7 @@ function closeItemDebug(){const modal=$("#itemDebugModal");if(modal)modal.hidden
 function loadPreset(id){
   const preset = getPresets().find(x=>x.id===id);
   if(!preset) return;
+  state.activePresetId = preset.id;
   state.build = JSON.parse(JSON.stringify(preset.build || {}));
   $("#buildName").value = preset.name || "";
   syncWeaponSlots();
@@ -906,8 +984,41 @@ function renamePreset(id){
 }
 
 function deletePreset(id){
-  savePresets(getPresets().filter(x=>x.id!==id));
+  const presets = getPresets();
+  const index = presets.findIndex(x=>x.id===id);
+  if(index === -1) return;
+
+  const wasActive = state.activePresetId === id;
+  const nextPreset = presets[index + 1] || presets[index - 1] || null;
+
+  // Remove the preset from saved compositions as well. Members after the
+  // deleted one naturally move up to fill its position.
+  const compositions = getCompositions().map(composition => ({
+    ...composition,
+    members: (composition.members || []).filter(member => member.presetId !== id)
+  }));
+  const zvzCompositions = getZvZCompositions().map(composition => ({
+    ...composition,
+    members: (composition.members || []).filter(member => member.presetId !== id)
+  }));
+
+  savePresets(presets.filter(x=>x.id!==id));
+  saveCompositions(compositions);
+  saveZvZCompositions(zvzCompositions);
+
+  if(wasActive){
+    if(nextPreset){
+      loadPreset(nextPreset.id);
+    }else{
+      // No preset remains: clear the active preset without destroying the
+      // current unsaved build.
+      state.activePresetId = null;
+    }
+  }
+
   renderPresets();
+  renderCompositions();
+  renderZvZCompositions();
 }
 
 function deleteAllPresets(){
@@ -915,6 +1026,7 @@ function deleteAllPresets(){
   if(!presets.length) return;
   if(!window.confirm(t("clearAllPresetsConfirm"))) return;
   savePresets([]);
+  state.activePresetId = null;
   renderPresets();
   setLibraryTab("presets");
 }
@@ -1003,6 +1115,55 @@ function duplicateZvZ(id){
   setLibraryTab("zvz");
 }
 
+function bindLibraryReordering(box,getList,saveList){
+  box._libraryDragAbort?.abort();
+  const controller=new AbortController();
+  box._libraryDragAbort=controller;
+  let draggedCard=null;
+  let activePointerId=null;
+  const finishDrag=()=>{
+    if(!draggedCard)return;
+    draggedCard.classList.remove("library-dragging");
+    box.querySelectorAll(".library-drop-before,.library-drop-after").forEach(item=>item.classList.remove("library-drop-before","library-drop-after"));
+    const orderedIds=[...box.querySelectorAll(".library-sort-card")].map(item=>item.dataset.sortId);
+    const itemById=new Map(getList().map(item=>[item.id,item]));
+    saveList(orderedIds.map(id=>itemById.get(id)).filter(Boolean));
+    draggedCard=null;
+    activePointerId=null;
+  };
+  box.querySelectorAll(".library-sort-card").forEach(card=>{
+    const handle=card.querySelector(".library-drag-handle");
+    if(!handle)return;
+    handle.addEventListener("pointerdown",event=>{
+      if(bulkSelectionMode || event.button!==0)return;
+      event.preventDefault();
+      draggedCard=card;
+      activePointerId=event.pointerId;
+      card.classList.add("library-dragging");
+    },{signal:controller.signal});
+  });
+  document.addEventListener("pointermove",event=>{
+    if(!draggedCard || event.pointerId!==activePointerId)return;
+    const cards=[...box.querySelectorAll(".library-sort-card")].filter(card=>card!==draggedCard);
+    const target=cards.find(card=>{
+      const rect=card.getBoundingClientRect();
+      return event.clientX>=rect.left && event.clientX<=rect.right && event.clientY>=rect.top && event.clientY<=rect.bottom;
+    });
+    box.querySelectorAll(".library-drop-before,.library-drop-after").forEach(item=>item.classList.remove("library-drop-before","library-drop-after"));
+    if(target){
+      const rect=target.getBoundingClientRect();
+      const before=event.clientY<rect.top+rect.height/2;
+      box.insertBefore(draggedCard,before?target:target.nextSibling);
+      target.classList.add(before?"library-drop-before":"library-drop-after");
+    }
+  },{capture:true,signal:controller.signal});
+  document.addEventListener("pointerup",event=>{
+    if(event.pointerId===activePointerId)finishDrag();
+  },{capture:true,signal:controller.signal});
+  document.addEventListener("pointercancel",event=>{
+    if(event.pointerId===activePointerId)finishDrag();
+  },{capture:true,signal:controller.signal});
+}
 function renderPresets(){
   const box = $("#presetsList");
   const presets = getPresets();
@@ -1018,8 +1179,10 @@ function renderPresets(){
   }
   box.innerHTML = presets.map(p=>{
     const count = Object.values(p.build || {}).filter(Boolean).length;
-    return `<div class="preset-card">
+    return `<div class="preset-card ${bulkSelected.has(`preset:${p.id}`)?"bulk-selected":""}" data-preset-id="${escapeHtml(p.id)}" data-sort-id="${escapeHtml(p.id)}">
+      ${bulkCheckbox("preset",p.id)}
       <div><strong>${escapeHtml(p.name)}</strong><small>${count}/9 slots</small></div>
+      <button class="library-drag-handle preset-drag-handle" type="button" aria-label="Arrastrar para ordenar" title="Arrastra para ordenar"></button>
       <details class="action-menu">
         <summary class="ghost action-menu-trigger" aria-label="Más opciones">...</summary>
         <div class="action-menu-dropdown">
@@ -1031,6 +1194,8 @@ function renderPresets(){
       </details>
     </div>`;
   }).join("");
+  bindBulkCheckboxes(box);
+  bindLibraryReordering(box,getPresets,savePresets);
   box.querySelectorAll("[data-load-preset]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); loadPreset(b.dataset.loadPreset); }));
   box.querySelectorAll("[data-duplicate-preset]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); duplicatePreset(b.dataset.duplicatePreset); }));
   box.querySelectorAll("[data-rename-preset]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); renamePreset(b.dataset.renamePreset); }));
@@ -1094,6 +1259,7 @@ function setLibraryTab(tab){
       ['data-rename-preset', renamePreset],
       ['data-delete-preset', deletePreset],
       ['data-view-composition', showCompositionPreview],
+      ['data-add-zvz-from-composition', addCompositionToZvZ],
       ['data-duplicate-composition', duplicateComposition],
       ['data-rename-composition', renameComposition],
       ['data-edit-composition', openCompositionEditor],
@@ -1203,7 +1369,8 @@ function setLibraryCollapsed(collapsed){
   libraryToggle.title = t(labelKey);
 }
 libraryToggle?.addEventListener("click",()=>setLibraryCollapsed(!workspaceEl?.classList.contains("library-collapsed")));
-document.querySelector("#deleteAllPresets")?.addEventListener("click", deleteAllPresets);
+document.querySelector("#bulkManage")?.addEventListener("click",handleBulkButton);
+renderBulkButton();
 
 document.querySelectorAll("[data-library-tab]").forEach(b=>b.addEventListener("click",()=>setLibraryTab(b.dataset.libraryTab)));
 $("#newComposition")?.addEventListener("click",()=>openCompositionEditor());
