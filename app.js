@@ -1,4 +1,4 @@
-const APP_VERSION = "0.4.27";
+const APP_VERSION = "0.4.29";
 const APP_CHANNEL = "ESTABLE";
 
 const state = {
@@ -22,7 +22,7 @@ const I18N = {
     weapon:"Arma", armor:"Pecho", offhand:"Secundaria", potion:"Poción", shoes:"Botas", food:"Comida",
     selectWeapon:"Seleccionar objeto", selectorHelp:"Busca por nombre o filtra por categoría.", offhandCompatibility:"Con un arma de una mano puedes elegir cualquier secundaria válida.",
     close:"Cerrar", cancel:"Cancelar", searchPlaceholder:"Buscar objeto...", chooseVariant:"Configura el tier, encantamiento y calidad.", equipmentVariantHelp:"Elige la variante que quieres añadir a la build.", consumableVariantHelp:"Este objeto no utiliza encantamiento ni calidad.",
-    savePreset:"Guardar como preset", newBuild:"Nueva build", presets:"Presets", presetsHelp:"Guarda builds para reutilizarlas más tarde.",
+    savePreset:"Guardar como preset", saveChanges:"Guardar cambios", edit:"Editar", newBuild:"Nueva build", presets:"Presets", presetsHelp:"Guarda builds para reutilizarlas más tarde.",
     library:"Biblioteca", libraryHelp:"Organiza tus builds y composiciones.", hideLibrary:"Ocultar biblioteca", showLibrary:"Mostrar biblioteca", exportAll:"Exportar todo", importAll:"Importar todo", exportDone:"Datos exportados correctamente.", importDone:"Datos añadidos correctamente. No se ha borrado nada.", importInvalid:"El archivo no es un respaldo válido de Albion Build Creator.", importConfirm:"Los datos del respaldo se añadirán a los que ya tienes. No se borrará nada. ¿Continuar?", myPresets:"Mis presets", myCompositions:"Mis composiciones", myZvZCompositions:"Mis composiciones ZvZ",
     noPresets:"Todavía no hay presets guardados.", noCompositions:"Todavía no hay composiciones.", compositionsHelp:"Organiza presets por rol.",
     newComposition:"Nueva composición", newZvZComposition:"Nueva composición ZvZ", compositionName:"Nombre de la composición", player:"Jugador", role:"Rol", preset:"Preset", addMember:"Añadir miembro", saveComposition:"Guardar composición", cancel:"Cancelar",
@@ -40,7 +40,7 @@ const I18N = {
     weapon:"Weapon", armor:"Armor", offhand:"Off-hand", potion:"Potion", shoes:"Shoes", food:"Food",
     selectWeapon:"Select item", selectorHelp:"Search by name or filter by category.", offhandCompatibility:"With a one-handed weapon you can choose any valid off-hand.",
     close:"Close", cancel:"Cancel", searchPlaceholder:"Search item...", chooseVariant:"Configure tier, enchantment and quality.", equipmentVariantHelp:"Choose the variant you want to add to the build.", consumableVariantHelp:"This item does not use enchantment or quality.",
-    savePreset:"Save as preset", newBuild:"New build", presets:"Presets", presetsHelp:"Save builds to reuse them later.",
+    savePreset:"Save as preset", saveChanges:"Save changes", edit:"Edit", newBuild:"New build", presets:"Presets", presetsHelp:"Save builds to reuse them later.",
     library:"Library", libraryHelp:"Organize your builds and compositions.", hideLibrary:"Hide library", showLibrary:"Show library", exportAll:"Export all", importAll:"Import all", exportDone:"Data exported successfully.", importDone:"Data added successfully. Nothing was deleted.", importInvalid:"This file is not a valid Albion Build Creator backup.", importConfirm:"The backup data will be added to what you already have. Nothing will be deleted. Continue?", myPresets:"My presets", myCompositions:"My compositions", myZvZCompositions:"My ZvZ compositions",
     noPresets:"No saved presets yet.", noCompositions:"No compositions yet.", compositionsHelp:"Organize presets by role.",
     newComposition:"New composition", newZvZComposition:"New ZvZ composition", compositionName:"Composition name", player:"Player", role:"Role", preset:"Preset", addMember:"Add member", saveComposition:"Save composition", cancel:"Cancel",
@@ -944,6 +944,23 @@ function buildHasItems(){
 function saveCurrentPreset(){
   const name = (document.querySelector("#buildName").value || "").trim() || `Build ${getPresets().length + 1}`;
   const presets = getPresets();
+  if(state.editingPresetId){
+    const existing=presets.find(p=>p.id===state.editingPresetId);
+    if(existing){
+      existing.name=name;
+      existing.build=JSON.parse(JSON.stringify(state.build));
+      existing.updatedAt=new Date().toISOString();
+      savePresets(presets);
+      state.activePresetId=existing.id;
+      state.editingPresetId=null;
+      $("#savePreset").textContent=t("savePreset");
+      renderPresets();
+      $("#status").textContent=`${t("saved")}${name}`;
+      return;
+    }
+    state.editingPresetId=null;
+    $("#savePreset").textContent=t("savePreset");
+  }
   const preset = {
     id: Date.now().toString(36) + Math.random().toString(36).slice(2,7),
     name,
@@ -968,12 +985,23 @@ function closeItemDebug(){const modal=$("#itemDebugModal");if(modal)modal.hidden
 function loadPreset(id){
   const preset = getPresets().find(x=>x.id===id);
   if(!preset) return;
+  state.editingPresetId=null;
+  $("#savePreset").textContent=t("savePreset");
   state.activePresetId = preset.id;
   state.build = JSON.parse(JSON.stringify(preset.build || {}));
   $("#buildName").value = preset.name || "";
   syncWeaponSlots();
   renderBuild();
   $("#status").textContent = `${t("selected")}${preset.name}`;
+}
+
+function editPreset(id){
+  const preset=getPresets().find(x=>x.id===id);
+  if(!preset)return;
+  loadPreset(id);
+  state.editingPresetId=id;
+  $("#savePreset").textContent=t("saveChanges");
+  $("#status").textContent=`${t("edit")}: ${preset.name}`;
 }
 
 function renamePreset(id){
@@ -1189,6 +1217,7 @@ function renderPresets(){
         <summary class="ghost action-menu-trigger" aria-label="Más opciones">...</summary>
         <div class="action-menu-dropdown">
           <button class="ghost" type="button" data-load-preset="${escapeHtml(p.id)}">${escapeHtml(t("load"))}</button>
+          <button class="ghost" type="button" data-edit-preset="${escapeHtml(p.id)}">${escapeHtml(t("edit"))}</button>
           <button class="ghost" type="button" data-duplicate-preset="${escapeHtml(p.id)}">${escapeHtml(t("duplicate"))}</button>
           <button class="ghost" type="button" data-rename-preset="${escapeHtml(p.id)}">${escapeHtml(t("rename"))}</button>
           <button class="ghost danger" type="button" data-delete-preset="${escapeHtml(p.id)}">${escapeHtml(t("delete"))}</button>
@@ -1203,6 +1232,7 @@ function renderPresets(){
     loadPreset(card.dataset.presetId);
   }));
   box.querySelectorAll("[data-load-preset]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); loadPreset(b.dataset.loadPreset); }));
+  box.querySelectorAll("[data-edit-preset]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); editPreset(b.dataset.editPreset); }));
   box.querySelectorAll("[data-duplicate-preset]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); duplicatePreset(b.dataset.duplicatePreset); }));
   box.querySelectorAll("[data-rename-preset]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); renamePreset(b.dataset.renamePreset); }));
   box.querySelectorAll("[data-delete-preset]").forEach(b=>b.addEventListener("click",()=>{ b.closest("details")?.removeAttribute("open"); deletePreset(b.dataset.deletePreset); }));
@@ -1481,9 +1511,12 @@ function isNonEquipable(item){
     "_RESOURCE", "RESOURCE_", "_MATERIAL", "MATERIAL_", "_RECIPE", "RECIPE_",
     "_TOOL_", "_TOOL", "TOOL_", "_FURNITURE", "FURNITURE_", "_CHEST", "CHEST_",
     "_JOURNAL", "JOURNAL_", "_TROPHY", "TROPHY_", "_SCROLL", "SCROLL_",
-    "_CURRENCY", "CURRENCY_", "_MOUNT", "MOUNT_", "_FISH", "FISH_",
+    "_CURRENCY", "CURRENCY_", "_MOUNT", "MOUNT_",
     "_FISHING", "FISHING_", "_FARM", "FARM_", "_REFINED", "REFINED_"
   ];
+  // Sandwiches made with fish are valid equipped food (for example
+  // T4_MEAL_SANDWICH_FISH); raw fish items themselves remain excluded.
+  if(id.includes("_FISH") && !id.includes("_MEAL_")) return true;
   if(blocked.some(x=>id.includes(x))) return true;
   const textBlocked = [
     "questitem", "quest token", "token", "seed", "artefact", "artifact",
@@ -2644,6 +2677,7 @@ async function loadItems(){
 
 document.querySelectorAll(".lang").forEach(b=>b.addEventListener("click",()=>{
   state.lang=b.dataset.lang; fillCategories(); filter(); applyI18n();
+  if(state.editingPresetId) $("#savePreset").textContent=t("saveChanges");
 }));
 document.querySelectorAll(".slot").forEach(slot=>slot.addEventListener("click",()=>{
   // Off-hand can only be edited when a one-handed weapon is equipped.
@@ -2677,8 +2711,8 @@ $("#closeSelector").addEventListener("click",()=>{
 });
 $("#cancelEditor").addEventListener("click",()=>{$("#itemEditor").classList.add("hidden"); if(state.activeSlot) $("#selector").classList.remove("hidden"); $("#enchant").disabled=false;state.selectedBase=null});
 $("#addItem").addEventListener("click",addItem);
-$("#savePreset").addEventListener("click",()=>{ if(buildHasItems()) saveCurrentPreset(); else $("#status").textContent=t("noPresets"); });
-$("#newBuild").addEventListener("click",()=>{ state.build={}; $("#buildName").value=""; renderBuild(); $("#status").textContent=""; });
+$("#savePreset").addEventListener("click",()=>{ if(buildHasItems() || state.editingPresetId) saveCurrentPreset(); else $("#status").textContent=t("noPresets"); });
+$("#newBuild").addEventListener("click",()=>{ state.editingPresetId=null; $("#savePreset").textContent=t("savePreset"); state.build={}; $("#buildName").value=""; renderBuild(); $("#status").textContent=""; });
 ["tier","enchant","quality"].forEach(id=>$("#"+id).addEventListener("change",updateEditorPreview));
 
 
