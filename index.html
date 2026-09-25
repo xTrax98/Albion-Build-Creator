@@ -4,31 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Creador de builds por xTrux</title>
-  <link rel="stylesheet" href="styles.css?v=0.4.12">
+  <link rel="stylesheet" href="styles.css?v=0.4.13">
 </head>
 <body>
-  <section id="fakeLogin" class="fake-login" aria-label="Inicio de sesión">
-    <div class="fake-login-card">
-      <div class="fake-login-logo"><img src="guild-logo.png" alt="Butaneros Avalonicos"></div>
-      <div class="guild-name">BUTANEROS AVALONICOS</div>
-      <h1>Iniciar sesión</h1>
-      <p class="fake-login-subtitle">Accede al Creador de Builds</p>
-      <form id="fakeLoginForm" autocomplete="off">
-        <label>Usuario
-          <input id="fakeUser" type="text" value="FinoTroll" placeholder="Tu usuario" autocomplete="off">
-        </label>
-        <label>Contraseña
-          <div class="password-field">
-            <input id="fakePassword" type="password" value="DarktanLaChupa" placeholder="Tu contraseña" autocomplete="off">
-            <button type="button" id="toggleFakePassword" class="password-eye" aria-label="Mostrar contraseña" title="Mostrar contraseña">👁️</button>
-          </div>
-        </label>
-        <button type="submit" class="primary fake-login-button">Iniciar sesión</button>
-        <button type="button" id="registerButton" class="ghost register-button">📝 Registrarse</button>
-      </form>
-      <div class="fake-login-joke">🔐 Seguridad de Butaneros: <strong>absolutamente ninguna</strong></div>
-    </div>
-  </section>
 
   <div id="premiumTroll" class="premium-troll" hidden aria-hidden="true">
     <div class="premium-troll-backdrop"></div>
@@ -58,7 +36,7 @@
 
   <div id="itemDebugModal" class="premium-modal" hidden><div id="itemDebugBackdrop" class="premium-modal-backdrop"></div><div class="premium-modal-card item-debug-card" role="dialog" aria-modal="true" aria-labelledby="itemDebugTitle"><div class="premium-modal-badge">🛠 TEST</div><h2 id="itemDebugTitle" data-i18n="debugTitle">Diagnóstico de IDs de objetos</h2><p class="item-debug-help">Aquí se ve el ID del JSON y el ID que la aplicación consigue actualmente en ao-data.</p><div id="itemDebugBody" class="item-debug-body"></div><div class="premium-modal-actions"><button type="button" id="itemDebugClose" class="primary" data-i18n="debugClose">Cerrar</button></div></div></div>
 
-  <main class="app" id="mainApp" hidden>
+  <main class="app" id="mainApp">
     <header class="topbar">
       <div class="brand-block">
         <div class="guild-mark" aria-label="Butaneros Avalonicos"><img src="guild-logo.png" alt="Butaneros Avalonicos"></div>

@@ -1,4 +1,4 @@
-const APP_VERSION = "0.4.12";
+const APP_VERSION = "0.4.13";
 const APP_CHANNEL = "ESTABLE";
 
 const state = {
@@ -65,7 +65,6 @@ const SLOT_LABELS = {
 
 const $ = (s) => document.querySelector(s);
 
-// Meme login: intentionally does not authenticate or store credentials.
 const premiumButton = $("#premiumButton");
 const premiumModal = $("#premiumModal");
 const premiumNo = $("#premiumNo");
@@ -134,43 +133,6 @@ if(premiumYes) premiumYes.addEventListener("click", ()=>{
 document.querySelectorAll("[data-premium-close]").forEach(el=>el.addEventListener("click", ()=>{ if(premiumModal) premiumModal.hidden=true; }));
 if(premiumTrollClose) premiumTrollClose.addEventListener("click", closePremiumTroll);
 if(premiumTroll) premiumTroll.querySelector(".premium-troll-backdrop")?.addEventListener("click", closePremiumTroll);
-
-const fakeLogin = $("#fakeLogin");
-const mainApp = $("#mainApp");
-const fakeLoginForm = $("#fakeLoginForm");
-const registerButton = $("#registerButton");
-const toggleFakePassword = $("#toggleFakePassword");
-if(toggleFakePassword){
-  toggleFakePassword.addEventListener("click", ()=>{
-    const password = $("#fakePassword");
-    if(!password) return;
-    const visible = password.type === "text";
-    password.type = visible ? "password" : "text";
-    toggleFakePassword.textContent = visible ? "👁️" : "🙈";
-    toggleFakePassword.setAttribute("aria-label", visible ? "Mostrar contraseña" : "Ocultar contraseña");
-    toggleFakePassword.title = visible ? "Mostrar contraseña" : "Ocultar contraseña";
-  });
-}
-if(registerButton){
-  registerButton.addEventListener("click", ()=>{
-    const user = $("#fakeUser");
-    const password = $("#fakePassword");
-    if(user) user.value = "Butaneros2026";
-    if(password) password.value = "Butaneros2026";
-    registerButton.textContent = "✅ Registrado (bueno... más o menos)";
-    setTimeout(()=>{ registerButton.textContent = "📝 Registrarse"; }, 1800);
-  });
-}
-if(fakeLoginForm && fakeLogin && mainApp){
-  fakeLoginForm.addEventListener("submit", (event)=>{
-    event.preventDefault();
-    fakeLogin.classList.add("fake-login-exit");
-    setTimeout(()=>{
-      fakeLogin.hidden = true;
-      mainApp.hidden = false;
-    }, 220);
-  });
-}
 
 function t(key){ return I18N[state.lang][key] ?? key; }
 function getPresets(){

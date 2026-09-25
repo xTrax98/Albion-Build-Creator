@@ -1,8 +1,7 @@
-# Albion Build Creator v0.4.12
+# Albion Build Creator v0.4.13
 
-Versión 0.4.12 estable.
+Versión 0.4.13 estable.
 
 ## Cambios de esta entrega
-- Permite abrir/cargar un preset haciendo clic en el cuerpo de su tarjeta.
-- Mantiene el arrastre manual para reordenar tarjetas.
-- Los botones y el menú conservan sus acciones propias.
+- Elimina la pantalla de inicio de sesión y abre directamente el creador.
+- Conserva las opciones de presets, composiciones, importación y orden manual.
