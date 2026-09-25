@@ -1,4 +1,4 @@
-const APP_VERSION = "0.4.5";
+const APP_VERSION = "0.4.6";
 const APP_CHANNEL = "ESTABLE";
 
 const state = {
@@ -229,6 +229,21 @@ function exportAllData(){
 function isArrayOfObjects(value){
   return Array.isArray(value) && value.every(x=>x && typeof x === "object" && !Array.isArray(x));
 }
+function normalizeBackupData(data){
+  if(!data || typeof data!=="object")return null;
+  const appName=String(data.app??data.application??"").trim();
+  if(appName && !/albion.*build creator/i.test(appName))return null;
+  const format=data.formatVersion??data.version;
+  if(format!=null && Number(format)>1)return null;
+  let presets;
+  if(Array.isArray(data))presets=data;
+  else presets=data.presets??data.builds??data.savedBuilds??data.savedPresets;
+  if(!isArrayOfObjects(presets))return null;
+  const compositions=data.compositions??data.buildCompositions??[];
+  const zvzCompositions=data.zvzCompositions??data.zvz??data.zvzBuilds??[];
+  if(!isArrayOfObjects(compositions)||!isArrayOfObjects(zvzCompositions))return null;
+  return {presets,compositions,zvzCompositions};
+}
 
 function normalizeImportName(value){
   return String(value || "")
@@ -398,11 +413,8 @@ async function importAllData(file){
     try{
       await waitForItemsReady();
       const data=JSON.parse(reader.result);
-      const valid=data && data.app === "Albion Build Creator" && data.formatVersion === 1
-        && isArrayOfObjects(data.presets)
-        && isArrayOfObjects(data.compositions)
-        && isArrayOfObjects(data.zvzCompositions);
-      if(!valid){ alert(t("importInvalid")); return; }
+      const backup=normalizeBackupData(data);
+      if(!backup){ alert(t("importInvalid")); return; }
       // Importar significa AÑADIR.
       // Nunca reemplazamos lo que ya existe.
       // Generamos nuevos IDs para que los datos importados no entren en conflicto
@@ -412,7 +424,7 @@ async function importAllData(file){
       const existingZvZ=getZvZCompositions();
 
       const presetIdMap=new Map();
-      const importedPresets=data.presets.map(original=>{
+      const importedPresets=backup.presets.map(original=>{
         const oldId=String(original.id ?? "");
         const newId=makeCopyId("imported-preset");
         if(oldId) presetIdMap.set(oldId,newId);
@@ -420,26 +432,26 @@ async function importAllData(file){
           ...JSON.parse(JSON.stringify(original)),
           id:newId,
           createdAt:original.createdAt || new Date().toISOString(),
-          build: resolveImportedBuild(original.build)
+          build: resolveImportedBuild(original.build || original.items || original.gear || {})
         };
       });
 
-      const importedCompositions=data.compositions.map(original=>({
+      const importedCompositions=backup.compositions.map(original=>({
         ...JSON.parse(JSON.stringify(original)),
         id:makeCopyId("imported-composition"),
         createdAt:original.createdAt || new Date().toISOString(),
-        members:(original.members||[]).map(member=>({
+        members:(Array.isArray(original.members)?original.members:[]).map(member=>({
           ...JSON.parse(JSON.stringify(member)),
           id:makeCopyId("imported-member"),
           presetId:presetIdMap.get(String(member.presetId ?? "")) || member.presetId
         }))
       }));
 
-      const importedZvZ=data.zvzCompositions.map(original=>({
+      const importedZvZ=backup.zvzCompositions.map(original=>({
         ...JSON.parse(JSON.stringify(original)),
         id:makeCopyId("imported-zvz"),
         createdAt:original.createdAt || new Date().toISOString(),
-        members:(original.members||[]).map(member=>({
+        members:(Array.isArray(original.members)?original.members:[]).map(member=>({
           ...JSON.parse(JSON.stringify(member)),
           id:makeCopyId("imported-zvz-member"),
           presetId:presetIdMap.get(String(member.presetId ?? "")) || member.presetId
