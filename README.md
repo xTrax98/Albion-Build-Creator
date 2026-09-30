@@ -1,6 +1,6 @@
-# Albion Build Creator v0.4.29
+# Albion Build Creator v0.4.31
 
-VersiÃ³n 0.4.29 estable.
+VersiÃ³n 0.4.31 estable.
 
 ## Cambios de esta entrega
 - Excluye del selector los cosméticos de Vanity, las capas decorativas, estandartes cosméticos y registros técnicos PROTOTYPE.\r\n- Conserva el equipo equipable aunque su identificador técnico incluya PROTOTYPE.\r\n- AÃ±ade filtros de material/familia para Cabeza, Pecho y Pies.
@@ -27,3 +27,7 @@ VersiÃ³n 0.4.29 estable.
 - Permite seleccionar los bocadillos de locha y mantiene fuera del selector el pescado crudo.
 
 - Añade la acción Editar en cada preset; guardar los cambios actualiza ese preset existente.
+
+- Añade Random items al editor de composiciones para crear y añadir un preset completo aleatorio como reto.
+
+- Corrige el filtro de pescado para mostrar los guisos de anguila equipables.

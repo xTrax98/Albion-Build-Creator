@@ -1,4 +1,4 @@
-const APP_VERSION = "0.4.29";
+const APP_VERSION = "0.4.31";
 const APP_CHANNEL = "ESTABLE";
 
 const state = {
@@ -25,7 +25,7 @@ const I18N = {
     savePreset:"Guardar como preset", saveChanges:"Guardar cambios", edit:"Editar", newBuild:"Nueva build", presets:"Presets", presetsHelp:"Guarda builds para reutilizarlas más tarde.",
     library:"Biblioteca", libraryHelp:"Organiza tus builds y composiciones.", hideLibrary:"Ocultar biblioteca", showLibrary:"Mostrar biblioteca", exportAll:"Exportar todo", importAll:"Importar todo", exportDone:"Datos exportados correctamente.", importDone:"Datos añadidos correctamente. No se ha borrado nada.", importInvalid:"El archivo no es un respaldo válido de Albion Build Creator.", importConfirm:"Los datos del respaldo se añadirán a los que ya tienes. No se borrará nada. ¿Continuar?", myPresets:"Mis presets", myCompositions:"Mis composiciones", myZvZCompositions:"Mis composiciones ZvZ",
     noPresets:"Todavía no hay presets guardados.", noCompositions:"Todavía no hay composiciones.", compositionsHelp:"Organiza presets por rol.",
-    newComposition:"Nueva composición", newZvZComposition:"Nueva composición ZvZ", compositionName:"Nombre de la composición", player:"Jugador", role:"Rol", preset:"Preset", addMember:"Añadir miembro", saveComposition:"Guardar composición", cancel:"Cancelar",
+    newComposition:"Nueva composición", newZvZComposition:"Nueva composición ZvZ", compositionName:"Nombre de la composición", player:"Jugador", role:"Rol", preset:"Preset", addMember:"Añadir miembro", randomItems:"🎲 Random items", randomRole:"Challenge aleatorio", randomPresetName:"Challenge aleatorio", randomItemsAdded:"Build aleatoria añadida a la composición.", saveComposition:"Guardar composición", cancel:"Cancelar",
     compositionSaved:"Composición guardada: ", presetsCount:"presets", edit:"Editar", view:"Ver", backToCreator:"Volver al creador", saveNames:"Guardar nombres", screenshotDiscord:"📸 Crear imagen para Discord", screenshotWorking:"Generando imagen...", screenshotDone:"Imagen creada.", screenshotError:"No se pudo crear la imagen.", zvzNamePlaceholder:"Nombre del jugador", zvzPreset:"Preset", zvzCompositionHelp:"Selecciona presets para tu composición ZvZ. Los nombres se ponen desde Ver.", compositionPreview:"Vista previa de la composición", players:"jugadores",
     load:"Cargar", duplicate:"Duplicar", rename:"Cambiar nombre", delete:"Eliminar", addToZvZ:"Añadir a ZvZ", bulkManage:"🗑️ Eliminar", bulkDelete:"🗑️ Borrar seleccionados", bulkCancel:"✕ Salir", bulkDeleteConfirm:"¿Borrar los elementos seleccionados? Esta acción no se puede deshacer.", saved:"Preset guardado: ",
     voiceBuild:"Crear build por voz", voiceListeningTitle:"Build por voz", voiceHelp:"Di los objetos de la build en cualquier orden.", voiceReady:"Pulsa el micrófono y habla.", startListening:"Escuchar", stopListening:"Parar", applyVoice:"Aplicar a la build", voiceUnsupported:"Tu navegador no admite reconocimiento de voz.", voiceListening:"Escuchando...", voiceNothing:"No he entendido ningún objeto.", voiceFound:"He encontrado:", voiceAmbiguous:"No he podido identificar con seguridad:", voiceApplied:"Build aplicada desde voz.", voiceStarting:"Activando micrófono...", voiceNoMatch:"No he detectado una frase clara. Prueba a hablar más cerca del micrófono.", voiceAudioStart:"Micrófono activo. Habla ahora.", voiceStartError:"No se pudo iniciar el reconocimiento.", clearVoice:"Limpiar", voiceSearching:"Buscando objetos...", voiceCleared:"Texto de voz limpiado.", voiceProcess:"Buscar objetos", voiceReadyToProcess:"Texto capturado. Pulsa Buscar objetos.",
@@ -43,7 +43,7 @@ const I18N = {
     savePreset:"Save as preset", saveChanges:"Save changes", edit:"Edit", newBuild:"New build", presets:"Presets", presetsHelp:"Save builds to reuse them later.",
     library:"Library", libraryHelp:"Organize your builds and compositions.", hideLibrary:"Hide library", showLibrary:"Show library", exportAll:"Export all", importAll:"Import all", exportDone:"Data exported successfully.", importDone:"Data added successfully. Nothing was deleted.", importInvalid:"This file is not a valid Albion Build Creator backup.", importConfirm:"The backup data will be added to what you already have. Nothing will be deleted. Continue?", myPresets:"My presets", myCompositions:"My compositions", myZvZCompositions:"My ZvZ compositions",
     noPresets:"No saved presets yet.", noCompositions:"No compositions yet.", compositionsHelp:"Organize presets by role.",
-    newComposition:"New composition", newZvZComposition:"New ZvZ composition", compositionName:"Composition name", player:"Player", role:"Role", preset:"Preset", addMember:"Add member", saveComposition:"Save composition", cancel:"Cancel",
+    newComposition:"New composition", newZvZComposition:"New ZvZ composition", compositionName:"Composition name", player:"Player", role:"Role", preset:"Preset", addMember:"Add member", randomItems:"🎲 Random items", randomRole:"Random challenge", randomPresetName:"Random challenge", randomItemsAdded:"Random build added to the composition.", saveComposition:"Save composition", cancel:"Cancel",
     compositionSaved:"Composition saved: ", presetsCount:"presets", edit:"Edit", view:"View", backToCreator:"Back to creator", saveNames:"Save names", screenshotDiscord:"📸 Create image for Discord", screenshotWorking:"Generating image...", screenshotDone:"Image created.", screenshotError:"Could not create the image.", zvzNamePlaceholder:"Player name", zvzPreset:"Preset", zvzCompositionHelp:"Select presets for your ZvZ composition. Names are entered from View.", compositionPreview:"Composition preview", players:"players",
     load:"Load", duplicate:"Duplicate", rename:"Rename", delete:"Delete", addToZvZ:"Add to ZvZ", bulkManage:"🗑️ Delete", bulkDelete:"🗑️ Delete selected", bulkCancel:"✕ Exit", bulkDeleteConfirm:"Delete the selected items? This cannot be undone.", saved:"Preset saved: ",
     voiceBuild:"Create build by voice", voiceListeningTitle:"Build by voice", voiceHelp:"Say the build items in any order.", voiceReady:"Press the microphone and speak.", startListening:"Listen", stopListening:"Stop", applyVoice:"Apply to build", voiceUnsupported:"Your browser does not support speech recognition.", voiceListening:"Listening...", voiceNothing:"I could not understand any item.", voiceFound:"Found:", voiceAmbiguous:"I could not identify with confidence:", voiceApplied:"Build applied from voice.", voiceStarting:"Activating microphone...", voiceNoMatch:"I did not detect a clear phrase. Try speaking closer to the microphone.", voiceAudioStart:"Microphone active. Speak now.", voiceStartError:"Could not start speech recognition.", clearVoice:"Clear", voiceSearching:"Searching items...", voiceCleared:"Voice text cleared.", voiceProcess:"Find objects", voiceReadyToProcess:"Text captured. Press Find objects.",
@@ -566,6 +566,7 @@ function openCompositionEditor(id=null){
         <select id="memberPreset">${presets.map(p=>`<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`).join("")}</select>
         <button id="addMember" class="ghost" type="button">${escapeHtml(t("addMember"))}</button>
       </div>
+      <button id="randomCompositionBuild" class="ghost random-composition-build" type="button">${escapeHtml(t("randomItems"))}</button>
       <div class="composition-actions">
         <button id="saveComposition" class="primary" type="button">${escapeHtml(t("saveComposition"))}</button>
         <button id="cancelComposition" class="ghost" type="button">${escapeHtml(t("cancel"))}</button>
@@ -580,6 +581,7 @@ function openCompositionEditor(id=null){
     panel._members.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,5), role:$("#memberRole").value.trim() || "-", presetId});
     $("#memberRole").value=""; renderCompositionMembers();
   });
+  $("#randomCompositionBuild").addEventListener("click",addRandomBuildToComposition);
   $("#saveComposition").addEventListener("click",saveCompositionEditor);
   $("#cancelComposition").addEventListener("click",()=>{ editingCompositionId=null; hideCompositionPreview(); resetCompositionPanel(); renderCompositions(); });
 }
@@ -993,6 +995,41 @@ function loadPreset(id){
   syncWeaponSlots();
   renderBuild();
   $("#status").textContent = `${t("selected")}${preset.name}`;
+}
+
+function addRandomBuildToComposition(){
+  const panel=$("#compositionsPanel");
+  const members=panel?._members;
+  if(!Array.isArray(members))return;
+  if(!state.items.length){$("#status").textContent=t("loadingData");return;}
+  const pick=slot=>{
+    const candidates=state.items.filter(item=>matchesSlot(item,slot) && parseItemVariant(item.id).enchant===0);
+    if(!candidates.length)return null;
+    const item=candidates[Math.floor(Math.random()*candidates.length)];
+    const variant=parseItemVariant(item.id);
+    return {baseId:variant.baseId,id:equipmentBaseId(item),name:getName(item),tier:variant.tier,enchant:0,quality:1,icon:iconUrl(item.id,0,1)};
+  };
+  const build={};
+  for(const slot of ["mainhand","head","armor","shoes","bag","cape","food","potion"]){
+    const item=pick(slot);
+    if(item)build[slot]=item;
+  }
+  if(!build.mainhand){$("#status").textContent=t("noPresets");return;}
+  if(!isTwoHandedWeapon(build.mainhand)){
+    const previousBuild=state.build;
+    state.build={mainhand:build.mainhand};
+    const offhand=pick("offhand");
+    if(offhand && isCompatibleOffhand(offhand))build.offhand=offhand;
+    state.build=previousBuild;
+  }
+  const presets=getPresets();
+  const preset={id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),name:`${t("randomPresetName")} ${presets.length+1}`,createdAt:new Date().toISOString(),build};
+  presets.unshift(preset);
+  savePresets(presets.slice(0,50));
+  members.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),role:t("randomRole"),presetId:preset.id});
+  renderPresets();
+  renderCompositionMembers();
+  $("#status").textContent=t("randomItemsAdded");
 }
 
 function editPreset(id){
@@ -1521,8 +1558,9 @@ function isNonEquipable(item){
   const textBlocked = [
     "questitem", "quest token", "token", "seed", "artefact", "artifact",
     "resource", "material", "recipe", "tracking kit", "tool", "furniture",
-    "journal", "trophy", "scroll", "currency", "mount", "fish", "fishing"
+    "journal", "trophy", "scroll", "currency", "mount", "fishing"
   ];
+  if(text.includes("fish") && !id.includes("_MEAL_")) return true;
   return textBlocked.some(x=>text.includes(x));
 }
 
